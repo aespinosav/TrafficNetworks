@@ -18,5 +18,6 @@ export
 include("graphs.jl")
 include("road_networks.jl")
 include("ta_solver.jl")
+include("lib_of_graphs.jl")
 
 end
