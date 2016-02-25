@@ -22,7 +22,7 @@ a_lol = Graph([0 1 0;
 braess = Graph([0 1 1 0;
                 0 0 1 1;
                 0 0 0 1;
-                0 0 0 0})
+                0 0 0 0])
 
 # augmented braess
 braess = Graph([0 1 1 1;
