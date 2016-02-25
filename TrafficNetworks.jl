@@ -10,7 +10,8 @@ export
     in_edges_idx, out_edges_idx, 
     adjacency_matrix, incidence_matrix,
     replace_OD_matrix!, make_ta_problem,
-    ta_solve
+    ta_solve, p2, p3, lol, a_lol, braess,
+    a_braess
 
 ## Includes
 
