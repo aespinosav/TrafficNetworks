@@ -59,12 +59,21 @@ Calls function make_ta_problem
 function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     
+    #redirect output of Convex solver to a log file to avoid screen clutter
+    originalSTDOUT = STDOUT
+    f = open("log_ta_solve.txt", "w")
+    redirect_stdout(f)
+
     sols = Array{Float64}[]
     for q in q_range
         problem, x = make_ta_problem(rn, q, regime)
         solve!(problem)
-        println("\n\nq = $q\nStatus: $(problem.status)\n\n")
+        #println("\n\nq = $q\nStatus: $(problem.status)\n\n")
         push!(sols, x.value)
     end
+
+    close(f)
+    redirect_stdout(originalSTDOUT)
+
     return sols
 end 
