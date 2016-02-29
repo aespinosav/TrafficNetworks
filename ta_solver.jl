@@ -1,6 +1,30 @@
 # Functions and calls to Convex.jl for solving Traffic Assignment
 
 """
+Returns the equality constraints needed for the TA optimisation
+"""
+function make_eq_constratints(rn::RoadNetwork, q)
+    n = num_nodes(rn)
+    m = num_edges(rn)
+    M = incidence_matrix(rn.g)
+
+    d = zeros(m)
+    flow_counter = 1
+        for i in 1:n
+            for j in 1:n
+                if rn.OD[i,j] > 0.0
+                    d[i] = -q[flow_counter]*rn.OD[i,j]
+                    d[j] = q[flow_counter]*rn.OD[i,j]
+                    flow_counter += 1
+                end
+            end
+        end
+    
+    x = Variable()
+    eq_constraints = incidence_matrix(rn.g)*x == d
+end
+
+"""
 Generates convex optimisation problem from the graph g, the Origin-Destination matrix OD,
 and the demand vector q. If only one OD pair, then q is a scalar. Regime is either "UE" (default)
 which is "user equilibrium" or "SO": system optimal.
@@ -56,12 +80,12 @@ end
 Returns solutions to the traffic assignment problem for a given range of demands: q_range.
 Calls function make_ta_problem
 """
-function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE")
+function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     
     #redirect output of Convex solver to a log file to avoid screen clutter
     originalSTDOUT = STDOUT
-    f = open("log_ta_solve.txt", "w")
+    f = open(logfile_name, "w")
     redirect_stdout(f)
 
     sols = Array{Float64}[]
