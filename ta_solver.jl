@@ -76,10 +76,19 @@ function make_ta_problem(rn::RoadNetwork, q, regime)
     return problem, x
 end
 
+"""
+Unpacks the sols output of ta_solve into a 2-dim array
+"""
+function unpack_sols(array_of_vectors)
+    cat(2,array_of_vectors...)
+end
 
 """
 Returns solutions to the traffic assignment problem for a given range of demands: q_range.
 Calls function make_ta_problem
+
+It returns a 2-dimensional array of the solution. The first row corresponds to the 
+first element (first edge) and so on... There is a column for every demand step.
 """
 function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
@@ -94,6 +103,7 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
     problem, x = make_ta_problem(rn, q_range[1], regime)
     #first solution
     solve!(problem)
+    push!(sols, x.value)
     
     if length(q_range) > 1
         for q in q_range[2:end]
@@ -106,5 +116,5 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
     close(f)
     redirect_stdout(originalSTDOUT)
 
-    return sols
+    unpack_sols(sols)
 end 
