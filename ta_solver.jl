@@ -104,7 +104,7 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
     #first solution
     solve!(problem)
     push!(sols, x.value)
-    
+    # iterates next optimisation routines with warmstart
     if length(q_range) > 1
         for q in q_range[2:end]
             problem.constraints[1] = make_eq_constratints(rn, q, x)
@@ -113,6 +113,7 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
         end
     end
 
+    # return stdout to original settings (closes logfile as well)
     close(f)
     redirect_stdout(originalSTDOUT)
 
