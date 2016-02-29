@@ -2,8 +2,10 @@
 
 """
 Returns the equality constraints needed for the TA optimisation
+of the RoadNetwork rn and the demand level q. The variable that is 
+used in the problem must also be passed as an argument x to the function
 """
-function make_eq_constratints(rn::RoadNetwork, q)
+function make_eq_constratints(rn::RoadNetwork, q, x::Variable)
     n = num_nodes(rn)
     m = num_edges(rn)
     M = incidence_matrix(rn.g)
@@ -19,8 +21,7 @@ function make_eq_constratints(rn::RoadNetwork, q)
                 end
             end
         end
-    
-    x = Variable()
+
     eq_constraints = incidence_matrix(rn.g)*x == d
 end
 
@@ -67,7 +68,7 @@ function make_ta_problem(rn::RoadNetwork, q, regime)
     end
 
     # Constraints to be passes to Convex.jl problem
-    eq_constraints = incidence_matrix(rn.g)*x == d
+    eq_constraints = make_eq_constratints(rn, q, x)
     ineq_constraints = x >= 0
 
     problem = minimize(cost_function, eq_constraints, ineq_constraints)
@@ -83,17 +84,23 @@ Calls function make_ta_problem
 function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     
+    sols = Array{Float64}[]
+
     #redirect output of Convex solver to a log file to avoid screen clutter
     originalSTDOUT = STDOUT
     f = open(logfile_name, "w")
     redirect_stdout(f)
 
-    sols = Array{Float64}[]
-    for q in q_range
-        problem, x = make_ta_problem(rn, q, regime)
-        solve!(problem)
-        #println("\n\nq = $q\nStatus: $(problem.status)\n\n")
-        push!(sols, x.value)
+    problem, x = make_ta_problem(rn, q_range[1], regime)
+    #first solution
+    solve!(problem)
+    
+    if length(q_range) > 1
+        for q in q_range[2:end]
+            problem.constraints[1] = make_eq_constratints(rn, q, x)
+            solve!(problem, warmstart=true)
+            push!(sols, x.value)
+        end
     end
 
     close(f)
