@@ -118,4 +118,48 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
     redirect_stdout(originalSTDOUT)
 
     unpack_sols(sols)
+end
+
+"""
+Returns solutions to the traffic assignment problem for a given range of demands: q_range.
+Calls function make_ta_problem
+
+It returns a 2-dimensional array of the solution. The first row corresponds to the 
+first element (first edge) and so on... There is a column for every demand step.
+
+This function also updates the RoadNetwork rn to contain the demand range and 
+the flow solutions.
+"""
+function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
+    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
+    
+    rn.demand_range = q_range
+
+    sols = Array{Float64}[]
+
+    #redirect output of Convex solver to a log file to avoid screen clutter
+    originalSTDOUT = STDOUT
+    f = open(logfile_name, "w")
+    redirect_stdout(f)
+
+    problem, x = make_ta_problem(rn, q_range[1], regime)
+    #first solution
+    solve!(problem)
+    push!(sols, x.value)
+    # iterates next optimisation routines with warmstart
+    if length(q_range) > 1
+        for q in q_range[2:end]
+            problem.constraints[1] = make_eq_constratints(rn, q, x)
+            solve!(problem, warmstart=true)
+            push!(sols, x.value)
+        end
+    end
+
+    # return stdout to original settings (closes logfile as well)
+    close(f)
+    redirect_stdout(originalSTDOUT)
+
+    flows = unpack_sols(sols)
+    rn.flows = flows
+    return flows
 end 
