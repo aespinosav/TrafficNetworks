@@ -36,3 +36,5 @@ Replaces OD matrix in a RoadNetwork rn.
 function replace_OD_matrix!(rn::RoadNetwork, OD_new::Array{Float64,2})
     rn.OD = OD_new
 end
+
+#question: should I attach the flows to the RoadNetwork object??
