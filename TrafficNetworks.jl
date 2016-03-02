@@ -1,6 +1,6 @@
 module TrafficNetworks
 
-using Convex, SCS
+using Convex, SCS, Gadfly
 
 import Base.show
 
@@ -10,8 +10,8 @@ export
     in_edges_idx, out_edges_idx, 
     adjacency_matrix, incidence_matrix,
     replace_OD_matrix!, make_ta_problem,
-    ta_solve, p2, p3, lol, a_lol, braess,
-    a_braess
+    ta_solve, ta_solve!, p2, p3, lol, a_lol, braess,
+    a_braess, total_cost
 
 ## Includes
 
@@ -19,5 +19,6 @@ include("graphs.jl")
 include("road_networks.jl")
 include("ta_solver.jl")
 include("lib_of_graphs.jl")
+include("analysis_functions.jl")
 
 end
