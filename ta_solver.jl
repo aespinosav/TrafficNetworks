@@ -160,6 +160,11 @@ function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logf
     redirect_stdout(originalSTDOUT)
 
     flows = unpack_sols(sols)
-    rn.flows = flows
+    if regime=="UE"
+        rn.flows_ue = flows
+    else
+        rn.flows_so = flows
+    end
+
     return flows
 end 
