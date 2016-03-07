@@ -1,6 +1,6 @@
 module TrafficNetworks
 
-using Convex, SCS, Gadfly
+using Convex, SCS, Gadfly, DataFrames
 
 import Base.show
 
@@ -11,7 +11,7 @@ export
     adjacency_matrix, incidence_matrix,
     replace_OD_matrix!, make_ta_problem,
     ta_solve, ta_solve!, p2, p3, lol, a_lol, braess,
-    a_braess, total_cost
+    a_braess, total_cost, edge_costs
 
 ## Includes
 
