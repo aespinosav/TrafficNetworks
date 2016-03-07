@@ -12,12 +12,13 @@ type RoadNetwork
     b::Array{Float64,1}
     OD::Array{Float64,2}
     demand_range::Array{Float64,1}
-    flows::Array{Float64,2}
+    flows_ue::Array{Float64,2}
+    flows_so::Array{Float64,2}
 end
 
 function RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2})
     g = Graph(A)
-    RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}())
+    RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}())
 end
 
 function show(io::IO, rn::RoadNetwork)
