@@ -32,6 +32,15 @@ type Graph
     out_edges::Dict{Node, Array{Edge,1}}
 end
 
+"""
+Makes an empty graph
+"""
+Graph() = Graph(Array{Node,1}[], Array{Edge,1}[], Dict{Node, Array{Edge,1}}(), Dict{Node, Array{Edge,1}}())
+
+"""
+Makes a (multi di) graph from an adjacency matrix. The weights in the adjacency matrix should be 
+integers and correspond to the number of edges between the given pair of nodes. 
+"""
 function Graph(A::Array{Int64,2})
     if size(A)[1] != size(A)[2]
         error("Adjacency matrix is not square")
