@@ -99,7 +99,7 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfi
     originalSTDOUT = STDOUT
     f = open(logfile_name, "w")
     redirect_stdout(f)
-
+    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     problem, x = make_ta_problem(rn, q_range[1], regime)
     #first solution
     solve!(problem)
