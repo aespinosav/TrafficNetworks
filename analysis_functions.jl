@@ -7,7 +7,7 @@ value in the demand range.
 
 TA problem has to have been solved
 """
-function total_cost(rn::RoadNetwork, regime="UE")
+function total_cost(rn::RoadNetwork; regime="UE")
     if regime == "UE"
         flows = rn.flows_ue
     else
@@ -24,7 +24,7 @@ end
 Returns the actual cost of each edge (cost * flow) in the same format as the
 flows (rows correspond to edges, columns to demand level)
 """
-function edge_costs(rn::RoadNetwork, regime="UE")
+function edge_costs(rn::RoadNetwork; regime="UE")
     m = num_edges(rn)
     
     if regime=="UE"
