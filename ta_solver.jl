@@ -90,7 +90,7 @@ Calls function make_ta_problem
 It returns a 2-dimensional array of the solution. The first row corresponds to the 
 first element (first edge) and so on... There is a column for every demand step.
 """
-function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
+function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     
     sols = Array{Float64}[]
@@ -130,7 +130,7 @@ first element (first edge) and so on... There is a column for every demand step.
 This function also updates the RoadNetwork rn to contain the demand range and 
 the flow solutions.
 """
-function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}, regime="UE", logfile_name="log_ta_solve.txt")
+function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
     
     rn.demand_range = q_range
