@@ -5,6 +5,13 @@
 """
 Road network object, has a graph, an OD matrix with the associated flows 
 between the O-D pair, and a and b parameters for affine cost functions.
+
+Can be constructed giving either a graph or and adjacency matrix as the first parameter:
+ 
+RoadNetwork(g, a, b, OD)
+RoadNetwork(A, a, b, OD)
+
+I should probably be promoting matrices to graphs to make code neater...
 """
 type RoadNetwork
     g::Graph
@@ -16,9 +23,13 @@ type RoadNetwork
     flows_so::Array{Float64,2}
 end
 
-function RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2})
-    g = Graph(A)
+function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2})
     RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}())
+end
+
+RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2}) =
+begin
+RoadNetwork(Graph(A), a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}())
 end
 
 function show(io::IO, rn::RoadNetwork)
