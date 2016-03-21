@@ -120,6 +120,9 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logfi
     unpack_sols(sols)
 end
 
+ta_solve(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve(rn, [q], regime="UE", logfile_name="log_ta_solve.txt")
+
+
 """
 Returns solutions to the traffic assignment problem for a given range of demands: q_range.
 Calls function make_ta_problem
@@ -168,3 +171,5 @@ function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logf
 
     return flows
 end 
+
+ta_solve!(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve!(rn, [q], regime="UE", logfile_name="log_ta_solve.txt")
