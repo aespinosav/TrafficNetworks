@@ -37,3 +37,18 @@ function edge_costs(rn::RoadNetwork; regime="UE")
     num_qs = length(rn.demand_range)
     costs = flows .* (rn.a .+ rn.b .* flows)
 end
+
+"""
+Returns the price of anarchy for the demand range that the TA on the network has been solved for.
+The function checks that the network has been solved for both UE and SO.
+
+usage:
+price_of_anarchy(rn)
+"""
+function price_of_anarchy(rn::RoadNetwork)
+    #We check that flows for both cases exist
+    if size(rn.flows_so) != size(rn.flows_ue)
+        error("Mismatch in sizes for UE and SO flows")
+
+    poa = rn.flows_ue ./ rn.flows_so
+end
