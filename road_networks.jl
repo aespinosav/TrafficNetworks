@@ -11,7 +11,7 @@ Can be constructed giving either a graph or and adjacency matrix as the first pa
 RoadNetwork(g, a, b, OD)
 RoadNetwork(A, a, b, OD)
 
-I should probably be promoting matrices to graphs to make code neater...
+I should probably define a convert function from matrices to graphs to make code neater...
 """
 type RoadNetwork
     g::Graph
@@ -21,15 +21,16 @@ type RoadNetwork
     demand_range::Array{Float64,1}
     flows_ue::Array{Float64,2}
     flows_so::Array{Float64,2}
+    flows_other::Array{Float64,2}
 end
 
 function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2})
-    RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}())
+    RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}(),Array{Float64,2}())
 end
 
 RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2}) =
 begin
-RoadNetwork(Graph(A), a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}())
+RoadNetwork(Graph(A), a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}(), Array{Float64,2}())
 end
 
 function show(io::IO, rn::RoadNetwork)
