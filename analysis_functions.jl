@@ -49,6 +49,6 @@ function price_of_anarchy(rn::RoadNetwork)
     #We check that flows for both cases exist
     if size(rn.flows_so) != size(rn.flows_ue)
         error("Mismatch in sizes for UE and SO flows")
-
+    end
     poa = rn.flows_ue ./ rn.flows_so
 end
