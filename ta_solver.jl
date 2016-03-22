@@ -120,7 +120,7 @@ function ta_solve(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logfi
     unpack_sols(sols)
 end
 
-ta_solve(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve(rn, [q], regime="UE", logfile_name="log_ta_solve.txt")
+ta_solve(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve(rn, [q], regime=regime, logfile_name=logfile_name)
 
 
 """
@@ -172,4 +172,4 @@ function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logf
     return flows
 end 
 
-ta_solve!(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve!(rn, [q], regime="UE", logfile_name="log_ta_solve.txt")
+ta_solve!(rn::RoadNetwork, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve!(rn, [q], regime=regime, logfile_name=logfile_name)
