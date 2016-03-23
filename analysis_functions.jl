@@ -21,6 +21,25 @@ function total_cost(rn::RoadNetwork; regime="UE")
 end
 
 """
+Returns the marginal cost of each edge (cost * flow) in the same format as the
+flows (rows correspond to edges, columns to demand level)
+"""
+function marginal_edge_costs(rn::RoadNetwork; regime="UE")
+    m = num_edges(rn)
+
+    if regime=="UE"
+        flows = rn.flows_ue
+    else
+        flows = rn.flows_so
+    end
+
+    num_sols = size(flows)[2]
+    num_qs = length(rn.demand_range)
+    costs = (rn.a .+ rn.b .* flows)
+end
+
+
+"""
 Returns the actual cost of each edge (cost * flow) in the same format as the
 flows (rows correspond to edges, columns to demand level)
 """
