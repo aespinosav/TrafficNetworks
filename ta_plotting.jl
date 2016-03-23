@@ -21,10 +21,10 @@ end
 normalises the flows of rn with respect to total demand for the chosen regime (UE/SO) 
 and makes a data frame.
 
-removes the first row of the original flows to avoid dividing by 0.
+Be careful about divisions by zero (it is a waste of processor to actually optimise for 0 demand...)
 """
 function normflows_data_frame(rn::RoadNetwork, regime="UE")
-    flows = flows_data_frame(rn, regime)[2:end, :]
+    flows = flows_data_frame(rn, regime)[1:end, :]
     for i in 2:size(flows)[2]
         flows[i] = flows[i] ./ flows[:q]
     end
