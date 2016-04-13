@@ -44,6 +44,7 @@ end
 
 num_nodes(rn::RoadNetwork) = num_nodes(rn.g)
 num_edges(rn::RoadNetwork) = num_edges(rn.g)
+incidence_matrix(rn::RoadNetwork) = incidence_matrix(rn.g)
 
 """
 Replaces OD matrix in a RoadNetwork rn.
@@ -53,3 +54,17 @@ function replace_OD_matrix!(rn::RoadNetwork, OD_new::Array{Float64,2})
 end
 
 #question: should I attach the flows to the RoadNetwork object??
+#
+# I think I should define a new "Assignment" object since it is getting a bit clunky to 
+# keep putting everything into the RoadNetwork. That way the ta_solve functions can take a RoadNetwork 
+# onject and return an assignement, that focuses on the flows and costs and all the data of the assignment
+# whilst keeping the RoadNetwork objec as minimal as needed. This would meand that the OD matrix just gives 
+# pairs of origins and destinations and giving these demands ranges would just have to be through the number
+# of distinct flows.
+#
+# Doing this also means that once the traffic assignment has been solved, we deal only with data from the simulation
+# and not with objects that can be changed by the solver functions. Saving the assignment would therefore be quite
+# simple, we have the header for the details  of the simulation and a table for the flows. Which can then be imported
+# into any  language easily for processing etc, in a simple way.
+#
+# All this should be done in a new branch!
