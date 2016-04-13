@@ -10,7 +10,7 @@ function make_eq_constratints(rn::RoadNetwork, q, x::Variable)
     m = num_edges(rn)
     M = incidence_matrix(rn.g)
 
-    d = zeros(m)
+    d = zeros(n) #changed this since it was giving problems when m != n... have to tes but it looks right.
     flow_counter = 1
         for i in 1:n
             for j in 1:n
@@ -132,6 +132,10 @@ first element (first edge) and so on... There is a column for every demand step.
 
 This function also updates the RoadNetwork rn to contain the demand range and 
 the flow solutions.
+
+ta_solve(rn, q_range, regime, logfile_name)
+                     |  
+                      optional from here ->
 """
 function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logfile_name="log_ta_solve.txt")
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
@@ -151,7 +155,7 @@ function ta_solve!(rn::RoadNetwork, q_range::Array{Float64,1}; regime="UE", logf
     push!(sols, x.value)
     # iterates next optimisation routines with warmstart
     if length(q_range) > 1
-        for q in q_range[2:end]
+        for q in q_range[2:end] # We are omitting the first value in q_Range as it is assumed you are starting from 0. This should probably change...
             problem.constraints[1] = make_eq_constratints(rn, q, x)
             solve!(problem, warmstart=true)
             push!(sols, x.value)
