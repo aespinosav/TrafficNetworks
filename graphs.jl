@@ -1,8 +1,9 @@
-#import Base.show
-
-# Defining Types
-######################
-######################
+########################################
+########################################
+#
+#                   Types
+# 
+########################################
 
 type Node
     index::Int
@@ -21,6 +22,7 @@ type Edge
 end
 #Edge(i::Int, s::Node, t::Node) = Edge(i::Int, s::Node, t::Node, Dict{AbstractString,Float64}())
 
+
 """
 Graph object (it has to be directed). Contains nodes, edges and dictionaries
 of incoming and outgoing edges for each node.
@@ -31,6 +33,9 @@ type Graph
     in_edges::Dict{Node, Array{Edge,1}}
     out_edges::Dict{Node, Array{Edge,1}}
 end
+
+#   Constructors for Graph
+#
 
 """
 Makes an empty graph
@@ -75,9 +80,12 @@ function Graph(A::Array{Int64,2})
 end
 
 
-
-
-
+###########################################################################
+###########################################################################
+#
+#    Functions
+#
+###########################################################################
 
 # show methods for neatness in REPL
 show(io::IO, n::Node) = print(io, "<$(n.index)> $(n.pos)")
@@ -87,9 +95,7 @@ function show(io::IO, g::Graph)
     print(io, output)
 end
 
-# Defining functions
-#######################
-#######################
+
 
 """
 Adds node n to graph g.
@@ -104,6 +110,7 @@ function add_node!(g::Graph, n::Node)
     return
 end
 
+
 """
 Adds a default node (with no position) to graph g (taking care of the indices).
 """
@@ -111,6 +118,7 @@ function add_node!(g::Graph)
     indx = num_nodes(g) + 1
     push!(g.nodes, Node(indx, Float64[]))
 end
+
 
 """
 Adds a node to graph g at with position pos.
@@ -120,6 +128,7 @@ function add_node!(g::Graph, pos::Array{Float64,1})
     n = Node(indx, pos)
     push!(g.nodes, n)
 end
+
 
 """
 Adds an edge to the graph g. It actually reconstructs the graph
@@ -135,6 +144,7 @@ function add_edge!(g::Graph, e::Edge)
     g = Graph(A)
 end
 
+
 """
 Adds an edge to the graph that connects node i to node j,
 where i and j are the indices for 2 nodes in the graph g.
@@ -146,7 +156,6 @@ function connect!(g::Graph, i::Int, j::Int)
 end
 
 
-
 """
 Returns the number of nodes of graph g.
 """
@@ -154,12 +163,14 @@ function num_nodes(g::Graph)
     length(g.nodes)
 end
 
+
 """
 Returns the number of edges of graph g.
 """
 function num_edges(g::Graph)
     length(g.edges)
 end
+
 
 """
 Returns an array of the indices of the edges that are
@@ -169,6 +180,7 @@ function in_edges_idx(n::Node, g::Graph)
     sort!([e.index for e in g.in_edges[n]])
 end
 in_edges_idx(i::Int, g::Graph) = in_edges_idx(g.nodes[i], g)
+
 
 """
 Returns an array of the indices of the edges that are
