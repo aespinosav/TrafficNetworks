@@ -13,7 +13,8 @@ export
     ta_solve, ta_solve!, p2, p3, lol, a_lol, braess,
     a_braess, lattice, total_cost, edge_costs, marginal_edge_costs,
     flows_data_frame, normflows_data_frame,
-    plot_flows, plot_normalised_flows
+    plot_flows, plot_normalised_flows,
+    TrafficAssignment
 
 ## Includes
 
@@ -23,5 +24,6 @@ include("ta_solver.jl")
 include("lib_of_graphs.jl")
 include("analysis_functions.jl")
 include("ta_plotting.jl")
+include("traffic_assignment.jl")
 
 end
