@@ -85,7 +85,7 @@ first element (first edge) and so on... There is a column for every demand step.
 """
 function ta_solve!(ta::TrafficAssignment; regime="UE", logfile_name="log_ta_solve.txt")
     
-    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
+    println("Will solve $regime, TA problem  for $(length(ta.demand_range)) values of demand...\n")
     
     rn = ta.rn
     ta.regime = regime
@@ -94,7 +94,7 @@ function ta_solve!(ta::TrafficAssignment; regime="UE", logfile_name="log_ta_solv
     originalSTDOUT = STDOUT
     f = open(logfile_name, "w")
     redirect_stdout(f)
-    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
+    println("Will solve $regime, TA problem  for $(length(ta.demand_range)) values of demand...\n")
     
     # make optimisation problem (Convex.jl)
     problem, x = make_ta_problem(rn, ta.demand_range[1], regime)
