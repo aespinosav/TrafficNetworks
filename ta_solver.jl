@@ -5,7 +5,7 @@ Returns the equality constraints needed for the TA optimisation
 of the RoadNetwork rn and the demand level q. The variable that is 
 used in the problem must also be passed as an argument x to the function
 """
-function make_eq_constratints(rn::RoadNetwork, q, x::Variable)
+function make_eq_constraints(rn::RoadNetwork, q, x::Variable)
     n = num_nodes(rn)
     m = num_edges(rn)
     M = incidence_matrix(rn.g)
@@ -68,7 +68,7 @@ function make_ta_problem(rn::RoadNetwork, q, regime)
     end
 
     # Constraints to be passes to Convex.jl problem
-    eq_constraints = make_eq_constratints(rn, q, x)
+    eq_constraints = make_eq_constraints(rn, q, x)
     ineq_constraints = x >= 0
 
     problem = minimize(cost_function, eq_constraints, ineq_constraints)
