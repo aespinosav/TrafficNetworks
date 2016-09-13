@@ -107,7 +107,7 @@ function ta_solve!(ta::TrafficAssignment; regime="UE", logfile_name="log_ta_solv
     # iterates next optimisation routines with warmstart
     if length(ta.demand_range) > 1
         for q in ta.demand_range[2:end]
-            problem.constraints[1] = make_eq_constratints(rn, q, x)
+            problem.constraints[1] = make_eq_constraints(rn, q, x)
             solve!(problem, warmstart=true)
             row = [q, x.value...]
             push!(ta.flows, row)
@@ -155,7 +155,7 @@ end
 #     # iterates next optimisation routines with warmstart
 #     if length(q_range) > 1
 #         for q in q_range[2:end] # We are omitting the first value in q_Range as it is assumed you are starting from 0. This should probably change...
-#             problem.constraints[1] = make_eq_constratints(rn, q, x)
+#             problem.constraints[1] = make_eq_constraints(rn, q, x)
 #             solve!(problem, warmstart=true)
 #             push!(sols, x.value)
 #         end
