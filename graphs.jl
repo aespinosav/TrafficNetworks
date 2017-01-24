@@ -56,13 +56,13 @@ function Graph(A::Array{Int64,2})
         out_edges[nodes[i]] = Edge[]
         in_edges[nodes[i]] = Edge[]
     end
-    
+
     edges = Edge[]
     counter = 1
     for i in 1:number_of_nodes
         for j in 1:number_of_nodes
             for k in 1:A[i,j]
-                
+
                 e = Edge(counter, nodes[i], nodes[j])
                 push!(edges, e)
                 push!(out_edges[nodes[i]], e)
@@ -220,4 +220,80 @@ function incidence_matrix(g::Graph)
     end
     
     return M
+end
+
+"""
+Saves a graph to a textfile that can be loaded with load_graph.
+To work properly the nodes should have positions.
+Tildes "~" indicate beggining and end of node and edge sections
+"""
+function save_graph(g, filename)
+
+    header = "#TrafficNetworks graph (can be loaded into julia with load_graph)\n"
+    node_header = "#Nodes\n#Index\tx\ty\n"
+    edge_header = "#Edges\n#source\ttarget\n"
+
+    indices_nodes = [n.index for n in g.nodes]
+    xs = [n.pos[1] for n in g.nodes]
+    ys = [n.pos[2] for n in g.nodes]
+
+    indices_edges = [e.index for e in g.edges]
+    sources = [e.source.index for e in g.edges]
+    targets = [e.target.index for e in g.edges]
+
+    open(filename, "w") do f
+        write(f, header)
+        write(f, node_header)
+        write(f, "~\n")
+        for i in 1:length(g.nodes)
+            write(f, "$(indices_nodes[i])\t$(xs[i])\t$(ys[i])\n")
+        end
+        write(f, "~\n")
+        write(f, edge_header)
+        write(f, "~\n")
+        for i in 1:length(g.edges)
+            write(f, "$(indices_edges[i])\t$(sources[i])\t$(targets[i])\n")
+        end
+        write(f, "~\n")
+    end
+end
+
+"""
+Loads a graph file and returns a
+"""
+function load_graph(filename)
+
+    g = Graph()
+
+    ln = "go"
+    open(filename, "r") do f
+        while ln[1] != '~'
+            ln = readline(f)
+        end
+        #Node adding start
+        ln = readline(f)
+        while ln[1] != '~'
+            line = split(ln)
+            ind = parse(Int, line[1])
+            x = float(line[2])
+            y = float(line[3])
+
+            add_node!(g, Node(ind, [x, y]))
+
+            ln = readline(f)
+        end
+        ln = readline(f)
+        ln = readline(f)
+        ln = readline(f)
+        ln = readline(f)
+        while ln[1] != '~'
+            line = split(ln)
+            i = parse(Int, line[2])
+            j = parse(Int, line[3])
+
+            connect!(g, i, j)
+            ln = readline(f)
+        end
+    end
+    return g
 end
