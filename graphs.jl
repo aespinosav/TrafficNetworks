@@ -218,9 +218,12 @@ function incidence_matrix(g::Graph)
             M[i,j] = 1
         end
     end
-    
+
     return M
 end
+
+#I/O functions for writing and reading graphs from a file
+
 
 """
 Saves a graph to a textfile that can be loaded with load_graph.
