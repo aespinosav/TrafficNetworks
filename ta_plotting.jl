@@ -38,7 +38,10 @@ Uses Gadfly.
 function plot_flows(rn::RoadNetwork, regime="UE")
     data_flows = flows_data_frame(rn, regime)
     #layers = [ layer( x=data_flows[1], y=data_flows[i], Geom.line, Theme(defaul_color=distinguishable_colors(size(data_flows)[2])[i])) for i in 2:length(flows) ]
-    plot(melt(data_flows, :q), 
+
+    melted_data = melt(data_flows, :q)
+
+    plot(melted_data, 
          x=:q, 
          y=:value, 
          color=:variable,
@@ -46,7 +49,7 @@ function plot_flows(rn::RoadNetwork, regime="UE")
          Guide.XLabel("Demand"),
          Guide.YLabel("Flow"),
          Guide.colorkey("Flows"),
-         Coord.Cartesian(ymin=0, ymax=rn.demand_range[end]),
+         Coord.Cartesian(ymin=0, ymax=maximum(melted_data[:value])),
          Guide.Title("Edge flows") )
 end
 
