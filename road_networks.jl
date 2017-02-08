@@ -53,6 +53,15 @@ function replace_OD_matrix!(rn::RoadNetwork, OD_new::Array{Float64,2})
     rn.OD = OD_new
 end
 
+"""
+Generates OD matrix for graph 'g' for a single OD pair given as a 2-element array 'od_pair'
+"""
+function od_matrix_from_pair(g, od_pair)
+    n = num_nodes(g)
+    OD = zeros(Int, n, n)
+    OD[od_pair[1], od_pair[2]] = 1
+    OD
+end
 #question: should I attach the flows to the RoadNetwork object??
 #
 # I think I should define a new "Assignment" object since it is getting a bit clunky to 
