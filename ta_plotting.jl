@@ -17,6 +17,14 @@ function flows_data_frame(rn::RoadNetwork, regime="UE")
     names!(data_frame, names)
 end
 
+function flows_data_frame(flows::Array{Float64,2}, rn::RoadNetwork, demand_range::Array{Float64,1})
+    names = append!([:q],[symbol("x$(i)") for i in 1:size(flows)[1]])
+    data_frame = DataFrame(cat(2, demand_range, flows'))
+    names!(data_frame, names)
+    data_frame
+end
+
+
 """
 normalises the flows of rn with respect to total demand for the chosen regime (UE/SO) 
 and makes a data frame.
