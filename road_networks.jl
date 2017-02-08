@@ -28,10 +28,17 @@ function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, OD::Arr
     RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}(),Array{Float64,2}())
 end
 
+function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, od_pair::Array{Int64,1})
+    OD = od_matrix_from_pair(g, od_pair)
+    RoadNetwork(g, a, b, OD)
+end
+
 RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}, OD::Array{Int64,2}) =
 begin
 RoadNetwork(Graph(A), a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}(), Array{Float64,2}())
 end
+
+
 
 function show(io::IO, rn::RoadNetwork)
     output = "RoadNetwork:\nNodes - $(num_nodes(rn.g)) \nEdges - $(num_edges(rn.g))\n    OD\n$(rn.OD)"
