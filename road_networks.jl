@@ -69,6 +69,7 @@ function od_matrix_from_pair(g, od_pair)
     OD[od_pair[1], od_pair[2]] = 1
     OD
 end
+
 #question: should I attach the flows to the RoadNetwork object??
 #
 # I think I should define a new "Assignment" object since it is getting a bit clunky to 
