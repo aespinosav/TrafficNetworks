@@ -62,6 +62,8 @@ end
 
 """
 Generates OD matrix for graph 'g' for a single OD pair given as a 2-element array 'od_pair'
+
+This should also be changed to sparse matrices once the rest of the code gets a rehaul.
 """
 function od_matrix_from_pair(g, od_pair)
     n = num_nodes(g)
