@@ -76,16 +76,17 @@ end
 
 
 
-
-
-
 # show methods for neatness in REPL
 show(io::IO, n::Node) = print(io, "<$(n.index)> $(n.pos)")
-show(io::IO, e::Edge) = print(io, "<$(e.index)>($(e.source.index) → $(e.target.index))")
+show(io::IO, e::Edge) = print(io, "<$(e.index)> ($(e.source.index) → $(e.target.index))")
 function show(io::IO, g::Graph)
     output = "Graph:\nNodes - $(num_nodes(g)) \nEdges - $(num_edges(g))"
     print(io, output)
 end
+
+#show(io::IO, l::Array{Edge, 1})
+#    
+#end
 
 # Defining functions
 #######################
@@ -131,8 +132,15 @@ function add_edge!(g::Graph, e::Edge)
     m = num_edges(g)
     e.index = m + 1
     push!(g.edges, e)
-    A = adjacency_matrix(g)
-    g = Graph(A)
+
+    s = e.source
+    t = e.target
+
+    push!(g.out_edges[g.nodes[s.index]], e)
+    push!(g.in_edges[g.nodes[t.index]], e)
+
+    #A = adjacency_matrix(g)
+    #g = Graph(A)
 end
 
 """
@@ -144,8 +152,6 @@ function connect!(g::Graph, i::Int, j::Int)
     e = Edge(m+1, g.nodes[i], g.nodes[j])
     add_edge!(g, e)
 end
-
-
 
 """
 Returns the number of nodes of graph g.
@@ -190,7 +196,6 @@ function adjacency_matrix(g::Graph)
     end
     A
 end
-
 
 """
 Returns the incidence matrix of g. An n x m matrix where n is the nummber of 
