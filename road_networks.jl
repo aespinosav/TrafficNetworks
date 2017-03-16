@@ -28,7 +28,11 @@ function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, OD::Arr
     RoadNetwork(g, a, b, OD, Array{Float64,1}(), Array{Float64,2}(), Array{Float64,2}(),Array{Float64,2}())
 end
 
-function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, od_pair::Array{Int64,1})
+"""
+Constructs a RoadNetwork from graph 'g' with param vectors 'a' and 'b' (lin cost functions).
+and an 'od_pair' (given as) either a tuple or an array
+"""
+function RoadNetwork(g::Graph, a::Array{Float64,1}, b::Array{Float64,1}, od_pair)
     OD = od_matrix_from_pair(g, od_pair)
     RoadNetwork(g, a, b, OD)
 end
