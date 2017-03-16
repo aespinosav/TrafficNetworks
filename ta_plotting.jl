@@ -17,7 +17,11 @@ function flows_data_frame(rn::RoadNetwork, regime="UE")
     names!(data_frame, names)
 end
 
-function flows_data_frame(flows::Array{Float64,2}, rn::RoadNetwork, demand_range::Array{Float64,1})
+"""
+Converts a solution array from 'ta_solve' into a data frame. Array has to be  given as 'flows' to a data frame.
+Needs the demand range as well...
+"""
+function flows_data_frame(flows::Array{Float64,2}, demand_range::Array{Float64,1})
     names = append!([:q],[symbol("x$(i)") for i in 1:size(flows)[1]])
     data_frame = DataFrame(cat(2, demand_range, flows'))
     names!(data_frame, names)
