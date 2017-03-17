@@ -74,9 +74,45 @@ function Graph(A::Array{Int64,2})
     Graph(nodes, edges, in_edges, out_edges)
 end
 
+"""
+Makes a graph from an SPARSE adjacency matrix.
+"""
+function Graph(A::AbstractSparseMatrix)
+    if size(A)[1] != size(A)[2]
+        error("Adjacency matrix is not square")
+    end
 
+    in_edges = Dict{Node, Array{Edge,1}}()
+    out_edges = Dict{Node, Array{Edge,1}}()
 
-# show methods for neatness in REPL
+    number_of_nodes = size(A)[1]
+    nodes = Node[]
+    for i in 1:number_of_nodes
+        push!(nodes, Node(i,Float64[]))
+        out_edges[nodes[i]] = Edge[]
+        in_edges[nodes[i]] = Edge[]
+    end
+
+    edges = Edge[]
+    counter = 1
+    
+    nz_indexes = [ind2sub(A, i)  for i in find(A)]
+
+    for idx in nz_indexes
+        i = idx[1]
+        j = idx[2]
+        
+        for k in 1:A[i,j]
+            e = Edge(counter, nodes[i], nodes[j])
+            push!(edges, e)
+            push!(out_edges[nodes[i]], e)
+            push!(in_edges[nodes[j]], e)
+            counter += 1
+        end
+    end
+    Graph(nodes, edges, in_edges, out_edges)
+end
+
 show(io::IO, n::Node) = print(io, "<$(n.index)> $(n.pos)")
 show(io::IO, e::Edge) = print(io, "<$(e.index)> ($(e.source.index) → $(e.target.index))")
 function show(io::IO, g::Graph)
@@ -138,9 +174,6 @@ function add_edge!(g::Graph, e::Edge)
 
     push!(g.out_edges[g.nodes[s.index]], e)
     push!(g.in_edges[g.nodes[t.index]], e)
-
-    #A = adjacency_matrix(g)
-    #g = Graph(A)
 end
 
 """
@@ -185,21 +218,35 @@ function out_edges_idx(n::Node, g::Graph)
 end
 out_edges_idx(i::Int, g::Graph) = out_edges_idx(g.nodes[i], g)
 
-
 """
-Returns the adjacency matrix of the graph g.
+Returns the adjacency matrix of graph 'g'. It is returned as a sparse matrix (SparseMatrixCSC).
+
+For a full matrix, use adjacency_matrix_non_sparse.
 """
 function adjacency_matrix(g::Graph)
-    A = zeros(Int, num_nodes(g), num_nodes(g))
+    n = num_nodes(g)
+    A = spzeros(n,n)
+
     for e in g.edges
-        A[e.source.index, e.target.index] += 1
+        i, j = e.source.index, e.target.index
+        A[i,j] += 1
     end
     A
 end
 
+
 """
-Returns the incidence matrix of g. An n x m matrix where n is the nummber of 
-nodes and m is the number of edges.
+Non-sparse version of the function adjacency matrix. 
+
+Returns the adjacency matrix of the graph g. Returns a non-sparse matrix.
+"""
+function adjacency_matrix_non_sparse(g::Graph)
+    A = adjacency_matrix(g)
+    full(A)
+end
+
+"""
+Returns the incidence matrix (SparseMatrixCSC) of 'g'. An n x m matrix where n is the number of nodes and m is the number of edges.
 
 Convention for the incidence matrix:
 M[i,j] = 1 if edge j is incoming at node i; 
@@ -207,102 +254,65 @@ M[i,j] = -1 if edge j is outgoing at node i
 M[i,j] = 0 otherwiswe.
 """
 function incidence_matrix(g::Graph)
+    n = num_nodes(g)
+    m = num_edges(g)
+    
+    M = spzeros(Int64, n, m)
 
-    M = zeros(Int, num_nodes(g),num_edges(g))
-
-    for i in 1:num_nodes(g)
+    #Go through all nodes
+    for i in 1:n
         out_e = out_edges_idx(i, g)
+        in_e = in_edges_idx(i,g)
+        
+        #Outgoing edges
         for j in out_e
             M[i,j] = -1
         end
-    end
-
-    for i in 1:num_nodes(g)
-        in_e = in_edges_idx(i, g)
+        #Incoming edges
         for j in in_e
             M[i,j] = 1
         end
     end
-
-    return M
+    M
 end
 
-#I/O functions for writing and reading graphs from a file
-#
-# THESE FUNCTIONS ARE NOW OBSOLOTE AS MODULE SkeletonCities.jl NOW READS AND WRITES TO A JSON FORMAT!!!
-# 
-# """
-# Saves a graph to a textfile that can be loaded with load_graph.
-# To work properly the nodes should have positions.
-# Tildes "~" indicate beggining and end of node and edge sections
-# """
-# function save_graph(g, filename)
-# 
-#     header = "#TrafficNetworks graph (can be loaded into julia with load_graph)\n"
-#     node_header = "#Nodes\n#Index\tx\ty\n"
-#     edge_header = "#Edges\n#source\ttarget\n"
-# 
-#     indices_nodes = [n.index for n in g.nodes]
-#     xs = [n.pos[1] for n in g.nodes]
-#     ys = [n.pos[2] for n in g.nodes]
-# 
-#     indices_edges = [e.index for e in g.edges]
-#     sources = [e.source.index for e in g.edges]
-#     targets = [e.target.index for e in g.edges]
-# 
-#     open(filename, "w") do f
-#         write(f, header)
-#         write(f, node_header)
-#         write(f, "~\n")
-#         for i in 1:length(g.nodes)
-#             write(f, "$(indices_nodes[i])\t$(xs[i])\t$(ys[i])\n")
-#         end
-#         write(f, "~\n")
-#         write(f, edge_header)
-#         write(f, "~\n")
-#         for i in 1:length(g.edges)
-#             write(f, "$(indices_edges[i])\t$(sources[i])\t$(targets[i])\n")
-#         end
-#         write(f, "~\n")
-#     end
-# end
-# 
-# """
-# Loads a graph file and returns a
-# """
-# function load_graph(filename)
-# 
-#     g = Graph()
-# 
-#     ln = "go"
-#     open(filename, "r") do f
-#         while ln[1] != '~'
-#             ln = readline(f)
-#         end
-#         #Node adding start
-#         ln = readline(f)
-#         while ln[1] != '~'
-#             line = split(ln)
-#             ind = parse(Int, line[1])
-#             x = float(line[2])
-#             y = float(line[3])
-# 
-#             add_node!(g, Node(ind, [x, y]))
-# 
-#             ln = readline(f)
-#         end
-#         ln = readline(f)
-#         ln = readline(f)
-#         ln = readline(f)
-#         ln = readline(f)
-#         while ln[1] != '~'
-#             line = split(ln)
-#             i = parse(Int, line[2])
-#             j = parse(Int, line[3])
-# 
-#             connect!(g, i, j)
-#             ln = readline(f)
-#         end
-#     end
-#     return g
-# end
+"""
+Non-sparse version of incidence_matrix.
+"""
+function incidence_matrix_non_sparse(g::Graph)
+    M = incidence_matrix(g)
+    full(M)
+end
+
+
+#"""
+#Non-sparse version of the function incidence_matrix.
+
+#Returns the incidence matrix of g. An n x m matrix where n is the nummber of 
+#nodes and m is the number of edges.
+
+#Convention for the incidence matrix:
+#M[i,j] = 1 if edge j is incoming at node i; 
+#M[i,j] = -1 if edge j is outgoing at node i
+#M[i,j] = 0 otherwiswe.
+#"#""
+#function incidence_matrix_non_sparse(g::Graph)
+
+#    M = zeros(Int64, num_nodes(g),num_edges(g))
+
+#    for i in 1:num_nodes(g)
+#        out_e = out_edges_idx(i, g)
+#        for j in out_e
+#            M[i,j] = -1
+#        end
+#    end
+
+#    for i in 1:num_nodes(g)
+#        in_e = in_edges_idx(i, g)
+#        for j in in_e
+#            M[i,j] = 1
+#        end
+#    end
+
+#    return M
+#end
