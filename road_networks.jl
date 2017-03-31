@@ -15,11 +15,6 @@ type RoadNetwork
     g::Graph
     a::Array{Float64,1}
     b::Array{Float64,1}
-    #OD::AbstractSparseMatrix
-    #demand_range::Array{Float64,1}
-    #flows_ue::Array{Float64,2}
-    #flows_so::Array{Float64,2}
-    #flows_other::Array{Float64,2}
 end
 
 RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}) =
