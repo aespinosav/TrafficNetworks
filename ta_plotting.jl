@@ -4,6 +4,9 @@
 Converts the flows of rn for the chosen regime (UE/SO) to a 
 data frame, mostly for plotting, but could be useful for storing 
 the data. (maybe this function should be defined in another file?)
+
+This version of the function should now be deprecated, it is only here while 
+I check if no other things depend on it...
 """
 function flows_data_frame(rn::RoadNetwork, regime="UE")
     if regime=="UE"
@@ -16,6 +19,17 @@ function flows_data_frame(rn::RoadNetwork, regime="UE")
     data_frame = DataFrame(cat(2, rn.demand_range, flows'))
     names!(data_frame, names)
 end
+
+"""
+Converts the solutions spat out by ta_solve into a DataFrame with nice headers to keep track of what is what...
+"""
+function flows_data_frame(rn::RoadNetwork, flow_array::AbstractArray, demand_range::Array{Float64,1})
+
+    names = append!([:q], [symbol("x$i") for i in 1:num_edges(rn)])
+    data_frame = DataFrame(cat(2, demand_range, flow_array'))
+    names!(data_frame, names)
+end
+
 
 """
 Converts a solution array from 'ta_solve' into a data frame. Array has to be  given as 'flows' to a data frame.
