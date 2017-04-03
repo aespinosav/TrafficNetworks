@@ -63,10 +63,25 @@ function od_matrix_from_pair(g::Graph, od_pairs::Array{Tuple{Int64,Int64},1})
     OD
 end
 
+
+"""
+Same as other od_matrix_from_pair function but takes a RoadNetwork instead of a Graph.
+"""
+function od_matrix_from_pair(rn::RoadNetwork, od_pair::Tuple{Int64,Int64})
+    od_matrix_from_pair(rn.g, od_pair)
+end
+"""
+Same as other function that makes an OD matrix for a netwrk from an array of od pairs.
+This function takes a RoadNetwork instead of a Graph.
+"""
+function od_matrix_from_pair(rn::RoadNetwork, od_pairs::Array{Tuple{Int64,Int64},1} )
+    od_matrix_from_pair(rn.g, od_pairs)
+end
+
 """
 Same as od_matrix_from_pair but returns a full matrix.
 """
-function od_matrix_from_pairs_non_sparse(g, od_pair)
+function od_matrix_from_pair_non_sparse(g, od_pair)
     OD = od_matrix_from_pairs(g, od_pair)
     full(OD)
 end
