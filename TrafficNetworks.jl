@@ -9,7 +9,7 @@ export
     in_edges_idx, out_edges_idx, 
     adjacency_matrix, incidence_matrix,
     adjacency_matrix_non_sparse, incidence_matrix_non_sparse,
-    replace_OD_matrix!, od_matrix_from_pair, make_ta_problem,
+    replace_OD_matrix!, od_pairs, od_matrix_from_pair, make_ta_problem,
     ta_solve, ta_solve!, p2, p3, lol, a_lol, braess,
     a_braess, lattice, total_cost, edge_costs, marginal_edge_costs,
     flows_data_frame, normflows_data_frame,
