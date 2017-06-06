@@ -32,15 +32,39 @@ function show(io::IO, rn::RoadNetwork)
     print(io, output)
 end
 
-
-#Functions
+#Functions for RoadNetwork object
 num_nodes(rn::RoadNetwork) = num_nodes(rn.g)
 num_edges(rn::RoadNetwork) = num_edges(rn.g)
 incidence_matrix(rn::RoadNetwork) = incidence_matrix(rn.g)
 
 """
-Generates OD matrix for graph 'g' for a single OD pair given as a 2-element tuple 'od_pair'.
+Returns an array of N OD pairs for a given graph g (uniformly chosen at random)
+"""
+function od_pairs(g::Graph, N)
 
+    od_pair_array = Any[]
+    for i in 1:N
+
+        origin = rand(1:num_nodes(g))
+        destination = rand(1:num_nodes(g))
+        while destination == origin
+            destination = rand(1:num_nodes(g))
+        end
+
+        push!(od_pair_array, (origin, destination))
+    end
+    od_pair_array
+end
+
+"""
+Returns an array of N OD pairs for a given road network rn  (uniformly chosen at random).
+
+Same as function for just graphs but takes road networks and extracts the graph object
+"""
+od_pairs(rn::RoadNetwork, N=1) = od_pairs(rn.g, N)
+
+"""
+Generates OD matrix for graph 'g' for a single OD pair given as a 2-element tuple 'od_pair'.
 Returns a sparse matrix.
 """
 function od_matrix_from_pair(g::Graph, od_pair::Tuple{Int64,Int64})
