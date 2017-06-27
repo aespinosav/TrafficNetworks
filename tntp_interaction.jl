@@ -37,9 +37,3 @@ function load_tntp_to_dataframe(filename)
         return dat
     end
 end
-
-# function convert_to_tn(data_frame_from_tntp)
-#
-       
-# end
-       
