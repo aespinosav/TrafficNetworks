@@ -7,16 +7,10 @@ value in the demand range.
 
 TA problem has to have been solved
 """
-function total_cost(rn::RoadNetwork; regime="UE")
-    if regime == "UE"
-        flows = rn.flows_ue
-    else
-        flows = rn.flows_so
-    end
-    
+function total_cost(rn::RoadNetwork, flows, demand_range)
     m = num_edges(rn)
     num_sols = size(flows)[2]
-    num_qs = length(rn.demand_range)
+    num_qs = length(demand_range)
     costs = [dot(rn.a,flows[:,i]) + dot(flows[:,i],diagm(rn.b)*flows[:,i]) for i in 1:num_qs]
 end
 
@@ -38,6 +32,9 @@ function marginal_edge_costs(rn::RoadNetwork; regime="UE")
     costs = (rn.a .+ rn.b .* flows)
 end
 
+function tot_cost(rn::RoadNetwork, flows)
+    costs = sum(rn.a .+ rn.b .* flows)
+end
 
 """
 Returns the actual cost of each edge (cost * flow) in the same format as the
