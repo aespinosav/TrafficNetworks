@@ -292,7 +292,16 @@ function incidence_matrix_non_sparse(g::Graph)
     full(incidence_matrix(g))
 end
 
- 
+
+function node_positions(g)
+    n = num_nodes(g)
+    xs = Float64[g.nodes[i].pos[1] for i in 1:n]
+    ys = Float64[g.nodes[i].pos[2] for i in 1:n]
+
+    xs, ys
+end
+
+
 
 
 #"""
