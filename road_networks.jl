@@ -109,3 +109,7 @@ function od_matrix_from_pair_non_sparse(g, od_pair)
     OD = od_matrix_from_pairs(g, od_pair)
     full(OD)
 end
+
+function node_positions(rn::RoadNetwork)
+    node_positions(rn.g)
+end
