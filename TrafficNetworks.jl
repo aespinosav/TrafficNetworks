@@ -6,7 +6,7 @@ import Base.show
 export 
     Node, Edge, Graph, RoadNetwork,
     add_node!, add_edge!, connect!, #Do these *need* to be exported?
-    num_nodes, num_edges,
+    num_nodes, num_edges, node_positions,
     in_edges_idx, out_edges_idx, #Do these *need* to be exported?
     adjacency_matrix, incidence_matrix,
     adjacency_matrix_non_sparse, incidence_matrix_non_sparse,
