@@ -1,7 +1,7 @@
 module TrafficNetworks
 
-using Convex, SCS, Gadfly, DataFrames
-import Base.show
+using Convex, SCS, Gadfly, DataFrames, UnicodePlots
+import Base.show, Base.length
 
 export 
     Node, Edge, Graph, RoadNetwork,
