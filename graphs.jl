@@ -47,20 +47,24 @@ Show important information about graph, and unicode plot of the edges.
 At the moment it assumes coordinates are known for the nodes... (this should not be assumed, and should be fixed soon...) 
 """
 function show(io::IO, g::Graph)
-    output = "Graph:\nNodes - $(num_nodes(g)) \nEdges - $(num_edges(g))\n\n"
-    print(io, output)
-    canvas = BrailleCanvas(60,25,
-                           origin_x = 0.0, origin_y = 0.0,
-                           width = 1.0, height = 1.0)
-    
-    xs, ys = node_positions(g)
+    n = num_nodes(g)
     m = num_edges(g)
-    edge_coords = Tuple{Float64,Float64,Float64,Float64}[(g.edges[i].source.pos..., g.edges[i].target.pos...) for i in 1:m]                       
-    for i in 1:m
-        lines!(canvas, edge_coords[i]...)
+    output = "Graph:\nNodes - $(n) \nEdges - $(m)\n\n"
+    print(io, output)
+    
+    if all(x -> length(x) == 2, Array{Float64,1}[g.nodes[i].pos for i in 1:n]) #If all nodes have 2D coordinates, then we can plot
+       canvas = BrailleCanvas(60,25,
+                              origin_x = 0.0, origin_y = 0.0,
+                              width = 1.0, height = 1.0)
+
+        xs, ys = node_positions(g)
+        edge_coords = Tuple{Float64,Float64,Float64,Float64}[(g.edges[i].source.pos..., g.edges[i].target.pos...) for i in 1:m] 
+        for i in 1:m
+            lines!(canvas, edge_coords[i]...)
+        end
+        #points!(canvas, xs, ys, :red)
+        print(io, canvas)
     end
-    #points!(canvas, xs, ys, :red)
-    print(io, canvas)
 end
 
 """
@@ -160,8 +164,25 @@ function add_node!(g::Graph, n::Node)
 
     push!(g.nodes, n)
     g.in_edges[n] = Edge[]
-    g.out_edges[n] = Edge[]
-    return
+    g.out_edges[n] = Edge[] 
+end
+
+"""
+Adds a default node (with no position) to graph g (taking care of the indices).
+"""
+function add_node!(g::Graph)
+    indx = num_nodes(g) + 1
+    new_node =  Node(indx, Float64[])
+    add_node!(g, new_node)
+end
+
+"""
+Adds a node to graph g at with position pos.
+"""
+function add_node!(g::Graph, pos::Array{Float64,1})
+    indx = num_nodes(g) + 1
+    n = Node(indx, pos)
+    push!(g.nodes, n)
 end
 
 """
@@ -176,27 +197,7 @@ function connect_net!(g::Graph, i::Int, j::Int)
 end
 
 """
-Adds a default node (with no position) to graph g (taking care of the indices).
-"""
-function add_node!(g::Graph)
-    indx = num_nodes(g) + 1
-    push!(g.nodes, Node(indx, Float64[]))
-end
-
-"""
-Adds a node to graph g at with position pos.
-"""
-function add_node!(g::Graph, pos::Array{Float64,1})
-    indx = num_nodes(g) + 1
-    n = Node(indx, pos)
-    push!(g.nodes, n)
-end
-
-"""
-Adds an edge to the graph g. It actually reconstructs the graph
-to get the edge indexes to follow the standard ordering.
-
-This way of doing it might not be a good idea...
+Adds an edge (given as Edge object) to the graph g. It also updates in_edges and out_edges.
 """
 function add_edge!(g::Graph, e::Edge)
     m = num_edges(g)
@@ -211,17 +212,39 @@ function add_edge!(g::Graph, e::Edge)
 end
 
 """
-Adds an edge to the graph that connects node i to node j,
-where i and j are the indices for 2 nodes in the graph g.
-
-This might actually not work if i remember correctly and doesnt it do
-the same as connect_net ?? (see if we need removing.)
+Adds an edge between given nodes. Where nodes are specified as indices
 """
-function connect!(g::Graph, i::Int, j::Int)
-    m = num_edges(g)
-    e = Edge(m+1, g.nodes[i], g.nodes[j])
-    add_edge!(g, e)
+function add_edge!(g::Graph, i::Int, j::Int)
+    connect_net!(g, i, j)
 end
+
+"""
+Adds an edge between specified nodes. Nodes should belong to g already (probably...)
+"""
+function add_edge!(g::Graph, s::Node, t::Node)
+    if s in g.nodes & t in g.nodes
+        new_index = num_edges(g) + 1
+        edge = Edge(new_index, s, t)
+        push!(g.edges, e)
+        push!(g.out_edges[s], e)
+        push!(g.in_edges[t], e)
+    else
+        error("Nodes not in graph! (at least one of them...)")
+    end
+end
+
+#"""
+#Adds an edge to the graph that connects node i to node j,
+#where i and j are the indices for 2 nodes in the graph g.
+#
+#This might actually not work if i remember correctly and doesnt it do
+#the same as connect_net ?? (see if we need removing.)
+#"""
+#function connect!(g::Graph, i::Int, j::Int)
+#    m = num_edges(g)
+#    e = Edge(m+1, g.nodes[i], g.nodes[j])
+#    add_edge!(g, e)
+#end
 
 """
 Returns the number of nodes of graph g.
