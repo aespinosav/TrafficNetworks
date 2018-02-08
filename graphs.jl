@@ -25,6 +25,10 @@ end
 show(io::IO, e::Edge) = print(io, "<$(e.index)> ($(e.source.index) → $(e.target.index))")
 #Edge(i::Int, s::Node, t::Node) = Edge(i::Int, s::Node, t::Node, Dict{AbstractString,Float64}())
 
+function length(e::Edge)
+    norm(e.target.pos - e.source.pos)
+end
+
 
 """
 Graph object (it has to be directed). Contains nodes, edges and dictionaries
@@ -37,9 +41,26 @@ type Graph
     out_edges::Dict{Node, Array{Edge,1}}
 end
 
+
+"""
+Show important information about graph, and unicode plot of the edges.
+At the moment it assumes coordinates are known for the nodes... (this should not be assumed, and should be fixed soon...) 
+"""
 function show(io::IO, g::Graph)
-    output = "Graph:\nNodes - $(num_nodes(g)) \nEdges - $(num_edges(g))"
+    output = "Graph:\nNodes - $(num_nodes(g)) \nEdges - $(num_edges(g))\n\n"
     print(io, output)
+    canvas = BrailleCanvas(60,25,
+                           origin_x = 0.0, origin_y = 0.0,
+                           width = 1.0, height = 1.0)
+    
+    xs, ys = node_positions(g)
+    m = num_edges(g)
+    edge_coords = Tuple{Float64,Float64,Float64,Float64}[(g.edges[i].source.pos..., g.edges[i].target.pos...) for i in 1:m]                       
+    for i in 1:m
+        lines!(canvas, edge_coords[i]...)
+    end
+    #points!(canvas, xs, ys, :red)
+    print(io, canvas)
 end
 
 """
@@ -292,7 +313,6 @@ function incidence_matrix_non_sparse(g::Graph)
     full(incidence_matrix(g))
 end
 
-
 function node_positions(g::Graph)
     n = num_nodes(g)
     xs = Float64[g.nodes[i].pos[1] for i in 1:n]
@@ -300,37 +320,3 @@ function node_positions(g::Graph)
 
     xs, ys
 end
-
-
-
-#"""
-#Non-sparse version of the function incidence_matrix.
-
-#Returns the incidence matrix of g. An n x m matrix where n is the nummber of 
-#nodes and m is the number of edges.
-
-#Convention for the incidence matrix:
-#M[i,j] = 1 if edge j is incoming at node i; 
-#M[i,j] = -1 if edge j is outgoing at node i
-#M[i,j] = 0 otherwiswe.
-#"#""
-#function incidence_matrix_non_sparse(g::Graph)
-
-#    M = zeros(Int64, num_nodes(g),num_edges(g))
-
-#    for i in 1:num_nodes(g)
-#        out_e = out_edges_idx(i, g)
-#        for j in out_e
-#            M[i,j] = -1
-#        end
-#    end
-
-#    for i in 1:num_nodes(g)
-#        in_e = in_edges_idx(i, g)
-#        for j in in_e
-#            M[i,j] = 1
-#        end
-#    end
-
-#    return M
-#end
