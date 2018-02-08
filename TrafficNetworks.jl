@@ -6,7 +6,7 @@ import Base.show, Base.length
 export
 #   From graphs.jl and road_networks.jl
     Node, Edge, Graph, RoadNetwork,
-    add_node!, add_edge!, connect!, #Do these *need* to be exported?
+    add_node!, add_edge!, connect_net!, #Do these *need* to be exported?
     num_nodes, num_edges, node_positions,
     in_edges_idx, out_edges_idx, #Do these *need* to be exported?
     adjacency_matrix, incidence_matrix,
