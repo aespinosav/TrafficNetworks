@@ -83,9 +83,9 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", l
     sols = Array{Float64}[]
 
     #redirect output of Convex solver to a log file to avoid screen clutter
-    originalSTDOUT = STDOUT
-    f = open(logfile_name, "w")
-    redirect_stdout(f)
+    #originalSTDOUT = STDOUT
+    #f = open(logfile_name, "w")
+    #redirect_stdout(f)
     println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
 
     problem, x = make_ta_problem(rn, OD, q_range[1], regime)
@@ -102,8 +102,8 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", l
     end
 
     # return stdout to original settings (closes logfile as well)
-    close(f)
-    redirect_stdout(originalSTDOUT)
+    #close(f)
+    #redirect_stdout(originalSTDOUT)
 
     unpack_sols(sols)
 end
