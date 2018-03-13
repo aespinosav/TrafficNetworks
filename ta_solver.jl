@@ -78,15 +78,17 @@ first element (first edge) and so on... There is a column for every demand step.
 """
 function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", logfile_name="log_ta_solve.txt")
 
-    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...")
 
-    sols = Array{Float64}[]
+
+
 
     #redirect output of Convex solver to a log file to avoid screen clutter
     #originalSTDOUT = STDOUT
     #f = open(logfile_name, "w")
     #redirect_stdout(f)
-    println("Will solve $regime, TA problem  for $(length(q_range)) values of demand...\n")
+    println("solving $regime for $(length(q_range)) values of demand...\n")
+    
+    sols = Array{Float64}[]
 
     problem, x = make_ta_problem(rn, OD, q_range[1], regime)
     #first solution individually to start with the warmstart later
@@ -109,3 +111,62 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", l
 end
 
 ta_solve(rn::RoadNetwork, OD, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve(rn, OD, [q]; regime=regime, logfile_name=logfile_name)[:]
+
+
+"""
+Solves a mixed equilibrium static traffic assignment. Where for the OD the demand is splilt into a proportion γ that attempts to
+minimise total cost and (1 - γ) that tries to solve for user equilibrium
+"""
+function mixed_ta_solve(rn, od, d, γ)
+    m = num_edges(rn.g)
+    
+    x = Convex.Variable(m)
+    y = Convex.Variable(m)
+    
+    ue_d = (1 - γ)*d
+    so_d = γ*d
+    
+    ue_eq_constraints = TrafficNetworks.make_eq_constratints(rn, od, ue_d, x)
+    ue_ineq_constraints = x >= 0
+    so_eq_constraints = TrafficNetworks.make_eq_constratints(rn, od, so_d, y)
+    so_ineq_constraints = y >= 0 
+    
+    ue_problem = Convex.minimize(dot(rn.a, x) + 0.5*Convex.quadform(x, diagm(rn.b)), ue_eq_constraints, ue_ineq_constraints)
+    so_problem = Convex.minimize(dot(rn.a, y) + Convex.quadform(y, diagm(rn.b)), so_eq_constraints, so_ineq_constraints ) 
+    
+    #Solve first instance
+    fix!(x, zeros(m))
+    solve!(so_problem)
+    free!(x)
+    
+    fix!(y)
+    solve!(ue_problem)
+    free!(y)
+    
+    old_x = x.value[:]
+    old_y = y.value[:]
+    
+    tolerance = 1e-6
+    err = 10
+    counter = 1
+    while err > tolerance
+        
+        old_x = x.value[:]
+        old_y = y.value[:]
+        
+        fix!(x)
+        solve!(so_problem, warmstart = counter > 1 ? true : false)
+        free!(x)
+        
+        fix!(y)
+        solve!(ue_problem, warmstart = counter > 1 ? true : false)
+        free!(y)
+        
+        err = maximum([norm(x.value - old_x), norm(y.value - old_y)])
+        counter += 1
+    end
+    println("Converged after alternating $(counter) times between objectives")
+    x.value[:], y.value[:]
+end
+
+
