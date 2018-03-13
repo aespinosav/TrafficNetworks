@@ -13,7 +13,7 @@ export
     adjacency_matrix_non_sparse, incidence_matrix_non_sparse,
     replace_OD_matrix!, od_pairs, od_matrix_from_pair, 
 #   From ta_solver.jl    
-    make_ta_problem, ta_solve, ta_solve!,
+    make_ta_problem, ta_solve, ta_solve!, mixed_ta_solve,
 #   From lib_of_graphs.jl
     p2, p3, lol, a_lol, braess, a_braess, lattice, 
 #   From analysis_functions.jl
