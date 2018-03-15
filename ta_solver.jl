@@ -77,11 +77,6 @@ It returns a 2-dimensional array of the solution. The first row corresponds to t
 first element (first edge) and so on... There is a column for every demand step.
 """
 function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", logfile_name="log_ta_solve.txt")
-
-
-
-
-
     #redirect output of Convex solver to a log file to avoid screen clutter
     #originalSTDOUT = STDOUT
     #f = open(logfile_name, "w")
@@ -92,7 +87,7 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", l
 
     problem, x = make_ta_problem(rn, OD, q_range[1], regime)
     #first solution individually to start with the warmstart later
-    solve!(problem)
+    solve!(problem, SCSSolver(verbose=false))
     push!(sols, x.value)
     #Iterates next optimisation routines with warmstart
     if length(q_range) > 1
@@ -113,11 +108,13 @@ end
 ta_solve(rn::RoadNetwork, OD, q::Float64; regime="UE", logfile_name="log_ta_solve.txt") = ta_solve(rn, OD, [q]; regime=regime, logfile_name=logfile_name)[:]
 
 
+
+
 """
 Solves a mixed equilibrium static traffic assignment. Where for the OD the demand is splilt into a proportion γ that attempts to
 minimise total cost and (1 - γ) that tries to solve for user equilibrium
 """
-function mixed_ta_solve(rn, od, d, γ)
+function mixed_ta_solve(rn, od, d, γ; tolerance=1e-6, max_iters=50)
     m = num_edges(rn.g)
     
     x = Convex.Variable(m)
@@ -135,21 +132,21 @@ function mixed_ta_solve(rn, od, d, γ)
     so_problem = Convex.minimize(dot(rn.a, y) + Convex.quadform(y, diagm(rn.b)), so_eq_constraints, so_ineq_constraints ) 
     
     #Solve first instance
-    fix!(x, zeros(m))
-    solve!(so_problem)
+    fix!(x, zeros(m)) #Solves UE assignment first
+    solve!(so_problem, SCSSolver(verbose=false))
     free!(x)
     
     fix!(y)
-    solve!(ue_problem)
+    solve!(ue_problem, SCSSolver(verbose=false)) #Adds UE vehicles after SO vehicles have eqd
     free!(y)
     
     old_x = x.value[:]
     old_y = y.value[:]
     
-    tolerance = 1e-6
     err = 10
     counter = 1
-    while err > tolerance
+    #max_iters = 50
+    while counter < max_iters
         
         old_x = x.value[:]
         old_y = y.value[:]

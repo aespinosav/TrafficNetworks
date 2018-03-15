@@ -1,6 +1,6 @@
 module TrafficNetworks
 
-using Convex, SCS, Gadfly, UnicodePlots
+using Convex, SCS, UnicodePlots
 import Base.show, Base.length
 
 export
