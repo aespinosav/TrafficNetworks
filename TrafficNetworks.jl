@@ -1,6 +1,6 @@
 module TrafficNetworks
 
-using Convex, SCS, Gadfly, DataFrames, UnicodePlots
+using Convex, SCS, Gadfly, UnicodePlots
 import Base.show, Base.length
 
 export
@@ -19,13 +19,13 @@ export
 #   From analysis_functions.jl
     total_cost, costs,
 #   From ta_plotting.jl
-    flows_data_frame, normflows_data_frame,
-    plot_flows, plot_normalised_flows
+#    flows_data_frame, normflows_data_frame,
+#    plot_flows, plot_normalised_flows
 
 include("graphs.jl")
 include("road_networks.jl")
 include("ta_solver.jl")
 include("lib_of_graphs.jl")
 include("analysis_functions.jl")
-include("ta_plotting.jl")
+#include("ta_plotting.jl")
 end
