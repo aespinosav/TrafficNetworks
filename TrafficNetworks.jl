@@ -17,7 +17,7 @@ export
 #   From lib_of_graphs.jl
     p2, p3, lol, a_lol, braess, a_braess, lattice, 
 #   From analysis_functions.jl
-    total_cost, costs,
+    total_cost, costs
 #   From ta_plotting.jl
 #    flows_data_frame, normflows_data_frame,
 #    plot_flows, plot_normalised_flows
