@@ -1,7 +1,6 @@
 #In this file we implement the RoadNetwork object and its pertaining functions.
 #It has changed a bit since the beginning and it is not clear if this type is actually just cluttering up this library.
 
-# Types
 """
 Road network object, has a graph, an OD matrix with the associated flows 
 between the O-D pair, and a and b parameters for affine cost functions.
@@ -32,16 +31,35 @@ function show(io::IO, rn::RoadNetwork)
     print(io, output)
 end
 
-#Functions for RoadNetwork object
+
+
+"""
+    num_nodes(rn::RoadNetwork)
+    
+Returns number of nodes of rn
+"""
 num_nodes(rn::RoadNetwork) = num_nodes(rn.g)
+
+"""
+    num_edges(rn::RoadNetwork)
+    
+Returns the number of edges of rn
+"""
 num_edges(rn::RoadNetwork) = num_edges(rn.g)
+
+"""
+    incidence_matrix(rn::RoadNetwork)
+
+Returns the incidence matrix of the graph of rn.
+"""
 incidence_matrix(rn::RoadNetwork) = incidence_matrix(rn.g)
 
 """
+    random_od_pairs(g::Graph, N)
+    
 Returns an array of N OD pairs for a given graph g (uniformly chosen at random)
 """
-function od_pairs(g::Graph, N)
-
+function random_od_pairs(g::Graph, N)
     od_pair_array = Any[]
     for i in 1:N
 
@@ -57,13 +75,17 @@ function od_pairs(g::Graph, N)
 end
 
 """
+    random_od_pairs(rn::RoadNetwork, N=1)
+    
 Returns an array of N OD pairs for a given road network rn  (uniformly chosen at random).
 
 Same as function for just graphs but takes road networks and extracts the graph object
 """
-od_pairs(rn::RoadNetwork, N=1) = od_pairs(rn.g, N)
+random_od_pairs(rn::RoadNetwork, N=1) = random_od_pairs(rn.g, N)
 
 """
+    od_matrix_from_pair(g::Graph, od_pair::Tuple{Int64,Int64})
+    
 Generates OD matrix for graph 'g' for a single OD pair given as a 2-element tuple 'od_pair'.
 Returns a sparse matrix.
 """
@@ -75,6 +97,8 @@ function od_matrix_from_pair(g::Graph, od_pair::Tuple{Int64,Int64})
 end
 
 """
+    od_matrix_from_pair(g::Graph, od_pairs::Array{Tuple{Int64,Int64},1})
+    
 If given a list of od pairs as an array of tuples 'od_pairs', will construct
 sparse OD matrix.
 """
@@ -89,20 +113,26 @@ end
 
 
 """
+    od_matrix_from_pair(rn::RoadNetwork, od_pair::Tuple{Int64,Int64})
+    
 Same as other od_matrix_from_pair function but takes a RoadNetwork instead of a Graph.
 """
 function od_matrix_from_pair(rn::RoadNetwork, od_pair::Tuple{Int64,Int64})
     od_matrix_from_pair(rn.g, od_pair)
 end
-"""
+"""    
+    od_matrix_from_pair(rn::RoadNetwork, od_pairs::Array{Tuple{Int64,Int64},1})
+    
 Same as other function that makes an OD matrix for a netwrk from an array of od pairs.
 This function takes a RoadNetwork instead of a Graph.
 """
-function od_matrix_from_pair(rn::RoadNetwork, od_pairs::Array{Tuple{Int64,Int64},1} )
+function od_matrix_from_pair(rn::RoadNetwork, od_pairs::Array{Tuple{Int64,Int64},1})
     od_matrix_from_pair(rn.g, od_pairs)
 end
 
 """
+    od_matrix_from_pair_non_sparse(g, od_pair)
+    
 Same as od_matrix_from_pair but returns a full matrix.
 """
 function od_matrix_from_pair_non_sparse(g, od_pair)
@@ -110,6 +140,13 @@ function od_matrix_from_pair_non_sparse(g, od_pair)
     full(OD)
 end
 
+
+"""
+    node_positions(rn::RoadNetwork)
+    
+Returns the geometric positions of the nodes in rn.
+
+"""
 function node_positions(rn::RoadNetwork)
     node_positions(rn.g)
 end
