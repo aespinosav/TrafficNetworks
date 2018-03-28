@@ -25,9 +25,8 @@ end
 show(io::IO, e::Edge) = print(io, "<$(e.index)> ($(e.source.index) → $(e.target.index))")
 #Edge(i::Int, s::Node, t::Node) = Edge(i::Int, s::Node, t::Node, Dict{AbstractString,Float64}())
 
-function length(e::Edge)
-    norm(e.target.pos - e.source.pos)
-end
+length(e::Edge) = norm(e.target.pos - e.source.pos)
+
 
 
 """
@@ -37,7 +36,7 @@ of incoming and outgoing edges for each node.
 type Graph
     nodes::Array{Node,1}
     edges::Array{Edge,1}
-    in_edges::Dict{Node, Array{Edge,1}}
+    in_edges::Dict{Node, Array{Edge,1}} #This should probably change to make mem allocation more efficient....
     out_edges::Dict{Node, Array{Edge,1}}
 end
 
@@ -68,12 +67,16 @@ function show(io::IO, g::Graph)
 end
 
 """
+    Graph()
+    
 Makes an empty graph
 """
 Graph() = Graph(Array{Node,1}[], Array{Edge,1}[], Dict{Node, Array{Edge,1}}(), Dict{Node, Array{Edge,1}}())
 
 
 """
+    Graph(A::Array{Int64,2})
+    
 Makes a (multi di) graph from an adjacency matrix. The weights in the adjacency matrix should be 
 integers and correspond to the number of edges between the given pair of nodes. 
 """
@@ -111,6 +114,8 @@ function Graph(A::Array{Int64,2})
 end
 
 """
+    Graph(A::AbstractSparseMatrix)
+    
 Makes a graph from a sparse adjacency matrix.
 """
 function Graph(A::AbstractSparseMatrix)
@@ -156,6 +161,8 @@ end
 #######################
 
 """
+    add_node!(g::Graph, n::Node)
+    
 Adds node n to graph g.
 """
 function add_node!(g::Graph, n::Node)
@@ -168,6 +175,8 @@ function add_node!(g::Graph, n::Node)
 end
 
 """
+    add_node!(g::Graph)
+    
 Adds a default node (with no position) to graph g (taking care of the indices).
 """
 function add_node!(g::Graph)
@@ -177,6 +186,8 @@ function add_node!(g::Graph)
 end
 
 """
+    add_node!(g::Graph, pos::Array{Float64,1})
+    
 Adds a node to graph g at with position pos.
 """
 function add_node!(g::Graph, pos::Array{Float64,1})
@@ -186,6 +197,8 @@ function add_node!(g::Graph, pos::Array{Float64,1})
 end
 
 """
+    connect_net!(g::Graph, i::Int, j::Int)
+    
 Adds and edge pointing from node i to node j
 """
 function connect_net!(g::Graph, i::Int, j::Int)
@@ -197,6 +210,8 @@ function connect_net!(g::Graph, i::Int, j::Int)
 end
 
 """
+    add_edge!(g::Graph, e::Edge)
+    
 Adds an edge (given as Edge object) to the graph g. It also updates in_edges and out_edges.
 """
 function add_edge!(g::Graph, e::Edge)
@@ -212,13 +227,17 @@ function add_edge!(g::Graph, e::Edge)
 end
 
 """
-Adds an edge between given nodes. Where nodes are specified as indices
+    add_edge!(g::Graph, i::Int, j::Int)
+    
+Adds a directed edge between given nodes. Where nodes are specified by their indices i and j.
 """
 function add_edge!(g::Graph, i::Int, j::Int)
     connect_net!(g, i, j)
 end
 
 """
+    add_edge!(g::Graph, s::Node, t::Node)
+    
 Adds an edge between specified nodes. Nodes should belong to g already (probably...)
 """
 function add_edge!(g::Graph, s::Node, t::Node)
@@ -247,6 +266,8 @@ end
 #end
 
 """
+    num_nodes(g::Graph)
+    
 Returns the number of nodes of graph g.
 """
 function num_nodes(g::Graph)
@@ -254,6 +275,8 @@ function num_nodes(g::Graph)
 end
 
 """
+    num_edges(g::Graph)
+    
 Returns the number of edges of graph g.
 """
 function num_edges(g::Graph)
@@ -261,6 +284,8 @@ function num_edges(g::Graph)
 end
 
 """
+    in_edges_idx(n::Node, g::Graph)
+    
 Returns an array of the indices of the edges that are
 incoming at node n.
 """
@@ -270,6 +295,8 @@ end
 in_edges_idx(i::Int, g::Graph) = in_edges_idx(g.nodes[i], g)
 
 """
+    out_edges_idx(n::Node, g::Graph)
+    
 Returns an array of the indices of the edges that are
 outgoing at node n.
 """
@@ -279,7 +306,9 @@ end
 out_edges_idx(i::Int, g::Graph) = out_edges_idx(g.nodes[i], g)
 
 """
-Returns the adjacency matrix of graph 'g'. It is returned as a sparse matrix (SparseMatrixCSC).
+    adjacency_matrix(g::Graph)
+    
+Returns the adjacency matrix of g. It is returned as a sparse matrix (SparseMatrixCSC).
 For a full matrix, use adjacency_matrix_non_sparse.
 """
 function adjacency_matrix(g::Graph)
@@ -293,6 +322,8 @@ function adjacency_matrix(g::Graph)
 end
 
 """
+    adjacency_matrix_non_sparse(g::Graph)
+    
 Non-sparse version of the function adjacency matrix. 
 Returns the adjacency matrix of the graph g. Returns a non-sparse matrix.
 """
@@ -302,6 +333,8 @@ function adjacency_matrix_non_sparse(g::Graph)
 end
 
 """
+    incidence_matrix(g::Graph)
+    
 Returns the incidence matrix (SparseMatrixCSC) of 'g'. An n x m matrix where n is the number of nodes and m is the number of edges.
 Convention for the incidence matrix:
 M[i,j] = 1 if edge j is incoming at node i; 
@@ -330,6 +363,8 @@ function incidence_matrix(g::Graph)
 end
 
 """
+    incidence_matrix_non_sparse(g::Graph)
+    
 Non-sparse version of incidence_matrix.
 """
 function incidence_matrix_non_sparse(g::Graph)
