@@ -1,6 +1,6 @@
 using Convex, SCS, Gurobi
-
 # Functions and calls to Convex.jl for solving Traffic Assignment
+
 """
     make_eq_constratints(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, x::Variable)
     
@@ -84,7 +84,7 @@ It returns a 2-dimensional array of the solution. The first row corresponds to t
 first element (first edge) and so on... There is a column for every demand step.
 
 In theory it should work with any solver in MathProgBase, I have only tested SCS and Gurobi (which seems to 
-bee having some bugs though...)
+be having some bugs though...)
 """
 function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", solver=SCSSolver(verbose=false))
     
@@ -175,8 +175,7 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     x.value[:], y.value[:], counter, err
 end
 """
-    mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
-    
+    mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)    
 """
 function mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     ue_d = (1.0 - γ)*d
@@ -185,8 +184,7 @@ function mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbos
 end
 
 """
-    mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
-    
+    mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)    
 """
 function mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
 
