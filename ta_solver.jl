@@ -1,6 +1,7 @@
+#This part of the module utilises Convex which imports functions that interfere with JuMP so careful with that.
 using Convex, SCS, Gurobi
 
-# Functions and calls to Convex.jl for solving Traffic Assignment
+
 """
     make_eq_constratints(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, x::Variable)
     
@@ -9,36 +10,49 @@ of the RoadNetwork 'rn' and the demand level 'q'. The variable that is
 used in the problem must also be passed as an argument 'x' to the function
 
 This version of the function uses sparse matrices and sparse arrays now...
+
+To extend for multiple origin-destination pairs the best way might be to create all the constraints
+in one go. But the constraints interplay with each other (or do they) so it may require 
+
+
+
+
+           Important, here I might need to check for type instability to
+           make sure it is not making things slow. With AbstractMatrix.
 """
 function make_eq_constratints(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, x::Variable)
-    n = num_nodes(rn)
-    m = num_edges(rn)
+    n = num_nodes(rn.g)
+    m = num_edges(rn.g)
     M = incidence_matrix(rn.g)
 
-    d = sparsevec(zeros(n)) #changed this since it was giving problems when m != n... have to test but it looks right.
-    flow_counter = 1
+    d = sparsevec(zeros(n)) #To change for multi od...
+    flow_counter = 1 #For multi od
     
     indices = find(OD)
     for k in indices
         i, j = ind2sub(OD, k)
-        if OD[i,j] > 0
+        if OD[i,j] > 0 #probably a faster way to check this?
             d[i] = -q[flow_counter]*OD[i,j]
             d[j] = q[flow_counter]*OD[i,j]
-            flow_counter += 1
+            flow_counter += 1 #For multi od
         end
     end
     eq_constraints = M*x == d
 end
+
 
 """
     make_ta_problem(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, regime::String)
     
 Generates convex optimisation problem from the graph g, the Origin-Destination matrix OD,
 and the demand vector q. If only one OD pair, then q is a scalar. Regime is either "UE" (default)
-which is "user equilibrium" or "SO": system optimal.
+which is 'user equilibrium' or 'SO': system optimal.
 
 This should be a general method for multiple OD pairs, but it only works for 1 OD pair for now
-This function uses Convex.jl
+This function uses Convex.jl.
+
+Maybe parametrizing the function by the type of matrix passed could make things much faster!
+our street networks are sparse after all.
 """
 function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
     
@@ -49,6 +63,11 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
     #num_flows = sum(map(sign, rn.OD))
     x = Convex.Variable(m)
     
+    
+    # I should be able to use forward diff to calculate both UE and SO in one go
+    # this would speed up since in my case we always want to compare both scenarios.
+    # since they actually transform so does SO live in the tangent bundle???
+    #
     if regime == "UE"
         cost_function = dot(rn.a, x) + 0.5*quadform(x, diagm(rn.b))
     elseif regime == "SO"
@@ -68,14 +87,20 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
 end
 
 """
-Unpacks the sols output of ta_solve into a 2-dim array
+    unpack_sols(array_of_vectors::Array{Array{Float64,2}})
+        
+Unpacks the sols output of ta_solve into a 2-dim array. This 
+seems to me that it is just overhead (maybe I should just declare 
+the arrays better in all functions to not have to do this. Or since
+this is julia does this mean that multiple dispath means this doesnt
+matter as long as everything is type-stable?).
 """
 function unpack_sols(array_of_vectors)
     cat(2,array_of_vectors...)
 end
 
 """
-    ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", solver=SCSSolver(verbose=false))
+    ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime='UE', solver=SCSSolver(verbose=false))
     
 Returns solutions to the traffic assignment problem for a given range of demands
 Calls function make_ta_problem
@@ -88,24 +113,32 @@ bee having some bugs though...)
 """
 function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", solver=SCSSolver(verbose=false))
     
-    println("Solving $regime STAP for d ∈ [$(q_range[1]), $(q_range[end])] ($(length(q_range)) step(s))\n")
-
-    sols = Array{Float64,1}[]
+    m = length(rn.g.edges)
+    n = length(rn.g.nodes)
+    n_q = length(q_range) #number of demand steps (samples?)
+    
+    if n_q > 1
+       println("Solving $regime STAP for d ∈ [$(q_range[1]), $(q_range[end])] ($(length(q_range)) step(s))\n")
+    end
+    
+    #sols = Array{Float64,1}[]
+    sols = zeros(Float64, m, n_q)
     problem, x = make_ta_problem(rn, OD, q_range[1], regime)
     
     solve!(problem, solver)
-    push!(sols, x.value[:])
+    #push!(sols, x.value[:])
+    sols[:,1] = x.value[:]
     
-    if length(q_range) == 1
-        return sols[1][:]
-    elseif length(q_range) > 1
-        for q in q_range[2:end]
+    if length(q_range) > 1
+        for (i,q) in enumerate(q_range[2:end])
             problem.constraints[1] = make_eq_constratints(rn, OD, q, x)
             solve!(problem, warmstart=true)
-            push!(sols, x.value[:])
+            #push!(sols, x.value[:])
+            sols[:,i] = x.value[:]
         end
     end
-    hcat(sols...)
+    #hcat(sols...)
+    sols
 end
 ta_solve(rn::RoadNetwork, OD, q::Float64; regime="UE", solver=SCSSolver(verbose=false)) = ta_solve(rn, OD, [q], regime=regime, solver=solver)[:]
 
@@ -132,10 +165,11 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     x = Variable(m, Positive())
     y = Variable(m, Positive())
     
-    ue_objective = a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
+    #ue_objective = a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
+    ue_objective = a'*x + (B*y)'*x + 0.5*quadform(x, B)
     ue_problem = minimize(ue_objective, make_eq_constratints(rn, od, ue_d, x), x >= 0)
 
-    so_objective = a'*y + quadform(y + x, B) + a'*x
+    so_objective = a'*y + quadform(y + x, B)
     #so_objective = a'*y + quadform(y + x, B)
     so_problem = minimize(so_objective, make_eq_constratints(rn, od, so_d, y), y >= 0)
     
@@ -152,6 +186,7 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     fix!(y, y_init)
     solve!(ue_problem, solver)
     free!(y)
+    
 
     
     err = 10
