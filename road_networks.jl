@@ -18,19 +18,26 @@ end
 
 RoadNetwork(A::Array{Int,2}, a::Array{Float64,1}, b::Array{Float64,1}) =
 begin
-    RoadNetwork(Graph(A), a, b)
+    if length(a) == length(b)
+        return RoadNetwork(Graph(A), a, b)
+    else
+        throw("Dimensions mismatch of a and b!")
+    end
 end
 
 RoadNetwork(A::AbstractSparseMatrix, a::Array{Float64,1}, b::Array{Float64,1}) =
 begin
-    RoadNetwork(Graph(A), a, b)
+    if length(a) == length(b)
+        return RoadNetwork(Graph(A), a, b)
+    else
+        throw("Dimensions mismatch of a and b!")
+    end
 end
 
 function show(io::IO, rn::RoadNetwork)
     output = "RoadNetwork:\nNodes - $(num_nodes(rn.g)) \nEdges - $(num_edges(rn.g))\n"
     print(io, output)
 end
-
 
 
 """
