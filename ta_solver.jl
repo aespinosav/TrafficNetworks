@@ -12,9 +12,7 @@ used in the problem must also be passed as an argument 'x' to the function
 This version of the function uses sparse matrices and sparse arrays now...
 
 To extend for multiple origin-destination pairs the best way might be to create all the constraints
-in one go. But the constraints interplay with each other (or do they) so it may require 
-
-
+in one go. But the constraints interplay with each other (or do they) so it may require
 
 
            Important, here I might need to check for type instability to
@@ -60,14 +58,11 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
     b = rn.b
     m = num_edges(rn.g)
 
-    #num_flows = sum(map(sign, rn.OD))
     x = Convex.Variable(m)
-    
-    
+
     # I should be able to use forward diff to calculate both UE and SO in one go
     # this would speed up since in my case we always want to compare both scenarios.
     # since they actually transform so does SO live in the tangent bundle???
-    #
     if regime == "UE"
         cost_function = dot(rn.a, x) + 0.5*quadform(x, diagm(rn.b))
     elseif regime == "SO"
@@ -86,18 +81,6 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
     return problem, x
 end
 
-"""
-    unpack_sols(array_of_vectors::Array{Array{Float64,2}})
-        
-Unpacks the sols output of ta_solve into a 2-dim array. This 
-seems to me that it is just overhead (maybe I should just declare 
-the arrays better in all functions to not have to do this. Or since
-this is julia does this mean that multiple dispath means this doesnt
-matter as long as everything is type-stable?).
-"""
-function unpack_sols(array_of_vectors)
-    cat(2,array_of_vectors...)
-end
 
 """
     ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime='UE', solver=SCSSolver(verbose=false))
@@ -121,26 +104,22 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", s
        println("Solving $regime STAP for d ∈ [$(q_range[1]), $(q_range[end])] ($(length(q_range)) step(s))\n")
     end
     
-    #sols = Array{Float64,1}[]
     sols = zeros(Float64, m, n_q)
     problem, x = make_ta_problem(rn, OD, q_range[1], regime)
     
     solve!(problem, solver)
-    #push!(sols, x.value[:])
     sols[:,1] = x.value[:]
     
     if length(q_range) > 1
         for (i,q) in enumerate(q_range[2:end])
             problem.constraints[1] = make_eq_constratints(rn, OD, q, x)
             solve!(problem, warmstart=true)
-            #push!(sols, x.value[:])
             sols[:,i] = x.value[:]
         end
     end
-    #hcat(sols...)
     sols
 end
-ta_solve(rn::RoadNetwork, OD, q::Float64; regime="UE", solver=SCSSolver(verbose=false)) = ta_solve(rn, OD, [q], regime=regime, solver=solver)[:]
+ta_solve(rn::RoadNetwork, OD, q::Float64; kwargs...) = ta_solve(rn, OD, [q], kwargs...)
 
 
 """
@@ -167,17 +146,17 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     
     #ue_objective = a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
     ue_objective = a'*x + (B*y)'*x + 0.5*quadform(x, B)
-    ue_problem = minimize(ue_objective, make_eq_constratints(rn, od, ue_d, x), x >= 0)
+    ue_problem = minimize(ue_objective, make_eq_constratints(rn, od, ue_d, x))#, x >= 0) # I think the Positive() argument takes care of this
 
     so_objective = a'*y + quadform(y + x, B)
     #so_objective = a'*y + quadform(y + x, B)
-    so_problem = minimize(so_objective, make_eq_constratints(rn, od, so_d, y), y >= 0)
+    so_problem = minimize(so_objective, make_eq_constratints(rn, od, so_d, y))#, y >= 0) # I think the Positive() argument takes care of this
     
-    x_init = ta_solve(rn, od, ue_d, regime="UE")
-    y_init = ta_solve(rn, od, so_d, regime="SO")
+    #x_init = ta_solve(rn, od, ue_d, regime="UE")
+    #y_init = ta_solve(rn, od, so_d, regime="SO")
     
-    #x_init = zeros(m)
-    #y_init = zeros(m)
+    x_init = zeros(m)
+    y_init = zeros(m)
     
     #First iteration
     fix!(x, x_init)
@@ -186,15 +165,13 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     fix!(y, y_init)
     solve!(ue_problem, solver)
     free!(y)
-    
 
-    
     err = 10
     counter = 0    
     while (counter < max_iters) && (err > tolerance)
         
-        old_x = copy(x.value[:])
-        old_y = copy(y.value[:])
+        old_x = x.value[:]
+        old_y = y.value[:]
         
         fix!(y)
         solve!(ue_problem, solver, warmstart=warmstart_flag)
@@ -213,43 +190,33 @@ end
     mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     
 """
-function mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
+function mixed_ta_solve(rn, od, d::Float64, γ::Float64; kwargs...)
     ue_d = (1.0 - γ)*d
     so_d = γ*d             
-    mixed_ta_solve(rn, od, [ue_d, so_d], solver=solver, tolerance=tolerance, max_iters=max_iters, warmstart_flag=warmstart_flag)
+    mixed_ta_solve(rn, od, [ue_d, so_d], kwargs...)
 end
 
 """
     mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     
 """
-function mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
+function mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; kwargs...)
 
-    solution_flows_ue = Array{Float64,1}[]
-    solution_flows_so = Array{Float64,1}[]
-    solution_flows_agg = Array{Float64,1}[]
-    iterations_to_converge = Int[]
-    last_residual = Float64[]
-     
-    for γ in γ_range
-        selfish_flows, altruistic_flows, iters, err = mixed_ta_solve(rn, od, d, γ, solver=solver, tolerance=tolerance, max_iters=max_iters)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-        push!(solution_flows_ue, selfish_flows)
-        push!(solution_flows_so, altruistic_flows)
-        push!(solution_flows_agg, selfish_flows + altruistic_flows)
-        push!(iterations_to_converge, iters)
-        push!(last_residual, err)
+    m = num_edges(rn.g)
+    a = rn.a
+    b = rn.b
+    n_γ = length(γ_range)
 
+    sol_ue = zeros(Float64, m, n_γ)
+    sol_so = zeros(Float64, m, n_γ)
+    sol_agg = zeros(Float64, m, n_γ)
+    its = zeros(Int, n_γ) #Iterations between so and ue flows
+    last_change = zeros(Float64, n_γ) #Change in magnitude of sol vector in last iter
+
+    for (i,γ) in enumerate(γ_range)
+        sol_ue[:,i], sol_so[:,i], its[i], last_change[i] =
+        mixed_ta_solve(rn, od, d, γ, kwargs...)
     end
     
-    solution_flows_ue = unpack_sols(solution_flows_ue)
-    solution_flows_so = unpack_sols(solution_flows_so) 
-    solution_flows_agg = unpack_sols(solution_flows_agg)
-    
-    mixed_link_costs = [costs(rn, solution_flows_agg[:,i]) for i in 1:length(γ_range)]
-    mixed_total_cost = [total_cost(rn, solution_flows_agg[:,i]) for i in 1:length(γ_range)]
-
-    mixed_selfish_cost = [mixed_link_costs[i]⋅solution_flows_ue[:,i] for i in 1:length(γ_range)]
-    mixed_alt_cost = [mixed_link_costs[i]⋅solution_flows_so[:,i] for i in 1:length(γ_range)]
-
-    solution_flows_agg, solution_flows_so, solution_flows_ue, mixed_total_cost, mixed_selfish_cost, mixed_alt_cost, iterations_to_converge, last_residual
+    sol_ue, sol_so, its, last_change
 end
