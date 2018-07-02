@@ -18,8 +18,8 @@
 Returns the total cost (scalar value) of the assignment given by flow_vector
 """
 function total_cost(rn::RoadNetwork, flow_vector::Array{Float64,1})
-    total_cost = rn.a'*flow_vector + flow_vector'*diagm(rn.b)*flow_vector
-    total_cost[1]
+    tc = rn.a'*flow_vector + flow_vector'*diagm(rn.b)*flow_vector
+    tc[1]
 end
 
 """
@@ -27,11 +27,7 @@ Returns a 1D array of the total network cost for each corresponding flow vector 
 """
 function total_cost(rn::RoadNetwork, flow_vector_array::Array{Float64,2})
     cols = size(flow_vector_array)[2]
-    total_costs_array = Array{Float64}(cols)
-    for i in 1:cols
-        total_costs_array[i] = total_cost(rn, flow_vector_array[:,i])
-    end
-    total_costs_array
+    tc = [total_cost(rn, flow_vector_array[:,i]) for i in 1:cols]
 end
 
 """

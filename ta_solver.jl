@@ -1,7 +1,6 @@
 #This part of the module utilises Convex which imports functions that interfere with JuMP so careful with that.
 using Convex, SCS, Gurobi
 
-
 """
     make_eq_constratints(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, x::Variable)
     
@@ -38,7 +37,6 @@ function make_eq_constratints(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, x
     eq_constraints = M*x == d
 end
 
-
 """
     make_ta_problem(rn::RoadNetwork, OD::AbstractMatrix, q::Float64, regime::String)
     
@@ -57,7 +55,6 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
     a = rn.a
     b = rn.b
     m = num_edges(rn.g)
-
     x = Convex.Variable(m)
 
     # I should be able to use forward diff to calculate both UE and SO in one go
@@ -80,7 +77,6 @@ function make_ta_problem(rn::RoadNetwork, OD, q::Float64, regime::String)
 
     return problem, x
 end
-
 
 """
     ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime='UE', solver=SCSSolver(verbose=false))
@@ -114,12 +110,12 @@ function ta_solve(rn::RoadNetwork, OD, q_range::Array{Float64,1}; regime="UE", s
         for (i,q) in enumerate(q_range[2:end])
             problem.constraints[1] = make_eq_constratints(rn, OD, q, x)
             solve!(problem, warmstart=true)
-            sols[:,i] = x.value[:]
+            sols[:,i+1] = x.value[:]
         end
     end
     sols
 end
-ta_solve(rn::RoadNetwork, OD, q::Float64; kwargs...) = ta_solve(rn, OD, [q], kwargs...)
+ta_solve(rn::RoadNetwork, OD, q::Float64; regime="UE", solver=SCSSolver(verbose=false)) = ta_solve(rn, OD, Float64[q], regime=regime, solver=solver)
 
 
 """
@@ -132,7 +128,7 @@ Defaults are:
 tolerance=1e-6
 max_iters=50
 """
-function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-7, max_iters=50, warmstart_flag=true)
+function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-7, max_iters=100, warmstart_flag=true)
     
     m = num_edges(rn.g)
     a = rn.a
@@ -144,31 +140,34 @@ function mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verb
     x = Variable(m, Positive())
     y = Variable(m, Positive())
     
-    #ue_objective = a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
     ue_objective = a'*x + (B*y)'*x + 0.5*quadform(x, B)
+    #ue_objective = a'*x + sum(B*y.*x) + quadform(x, B)
     ue_problem = minimize(ue_objective, make_eq_constratints(rn, od, ue_d, x))#, x >= 0) # I think the Positive() argument takes care of this
 
-    so_objective = a'*y + quadform(y + x, B)
-    #so_objective = a'*y + quadform(y + x, B)
+    so_objective = a'*y + a'*x + quadform(y + x, B)
+    #so_objective = a'*y + sum(2*b.*y.*x) + quadform(y, B)
+    #so_objective = a'*y + quadform(y, B) + 2*(x')*B*y
     so_problem = minimize(so_objective, make_eq_constratints(rn, od, so_d, y))#, y >= 0) # I think the Positive() argument takes care of this
     
-    #x_init = ta_solve(rn, od, ue_d, regime="UE")
-    #y_init = ta_solve(rn, od, so_d, regime="SO")
+    x_init = ta_solve(rn, od, ue_d, regime="UE")
+    y_init = ta_solve(rn, od, so_d, regime="SO")
+    #x_init = zeros(m)
+    #y_init = zeros(m)
     
-    x_init = zeros(m)
-    y_init = zeros(m)
+    x.value = x_init
+    y.value = y_init
     
     #First iteration
-    fix!(x, x_init)
+    fix!(x)
     solve!(so_problem, solver)
     free!(x)
-    fix!(y, y_init)
+    fix!(y)
     solve!(ue_problem, solver)
     free!(y)
 
     err = 10
     counter = 0    
-    while (counter < max_iters) && (err > tolerance)
+    while (counter < max_iters) || (err > tolerance)
         
         old_x = x.value[:]
         old_y = y.value[:]
@@ -190,33 +189,129 @@ end
     mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     
 """
-function mixed_ta_solve(rn, od, d::Float64, γ::Float64; kwargs...)
+function mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     ue_d = (1.0 - γ)*d
     so_d = γ*d             
-    mixed_ta_solve(rn, od, [ue_d, so_d], kwargs...)
+    mixed_ta_solve(rn, od, Float64[ue_d, so_d], solver=solver, tolerance=tolerance, max_iters=max_iters, warmstart_flag=warmstart_flag)
 end
 
 """
     mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     
 """
-function mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; kwargs...)
-
+function mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=50, warmstart_flag=true)
     m = num_edges(rn.g)
     a = rn.a
     b = rn.b
     n_γ = length(γ_range)
 
-    sol_ue = zeros(Float64, m, n_γ)
-    sol_so = zeros(Float64, m, n_γ)
-    sol_agg = zeros(Float64, m, n_γ)
+    sol_sel = zeros(Float64, m, n_γ)
+    sol_alt = zeros(Float64, m, n_γ)
     its = zeros(Int, n_γ) #Iterations between so and ue flows
     last_change = zeros(Float64, n_γ) #Change in magnitude of sol vector in last iter
 
     for (i,γ) in enumerate(γ_range)
-        sol_ue[:,i], sol_so[:,i], its[i], last_change[i] =
-        mixed_ta_solve(rn, od, d, γ, kwargs...)
+        sol_sel[:,i], sol_alt[:,i], its[i], last_change[i] =
+        mixed_ta_solve(rn, od, d, γ, solver=solver, tolerance=tolerance, max_iters=max_iters, warmstart_flag=warmstart_flag)
     end
+    sol_sel, sol_alt, its, last_change
+end
+
+
+
+
+
+
+
+
+
+
+
+
+function make_so_obj(y::Convex.Variable,  x, rn)
+    a = rn.a
+    B = diagm(rn.b)
+    a'*y + quadform(y + x, B)
+end
+function make_ue_obj(x::Convex.Variable,  y, rn)
+    a = rn.a
+    B = diagm(rn.b)
+    a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
+end
+
+function alt_mixed_ta_solve(rn, od, demands::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-7, max_iters=100, warmstart_flag=true)
     
-    sol_ue, sol_so, its, last_change
+    m = num_edges(rn.g)
+    a = rn.a
+    b = rn.b
+    B = diagm(rn.b)    
+    
+    #Set up problems
+    ue_d , so_d = demands
+    x = Variable(m, Positive())
+    y = Variable(m, Positive())
+    
+    #ue_objective = a'*x + (2*B*y)'*x + 0.5*quadform(x, B)
+    #ue_problem = minimize(ue_objective, make_eq_constratints(rn, od, ue_d, x))
+
+    #so_objective = a'*y + quadform(y + x, B)
+    #so_problem = minimize(so_objective, make_eq_constratints(rn, od, so_d, y))
+    
+    x_init = ta_solve(rn, od, ue_d, regime="UE")
+    y_init = ta_solve(rn, od, so_d, regime="SO")
+    #x_init = zeros(m)
+    #y_init = zeros(m)    
+    x.value = x_init
+    y.value = y_init
+    
+    problem = minimize(make_so_obj(y, x.value[:], rn), make_eq_constratints(rn, od, so_d, y))
+    solve!(problem, solver)
+    problem.objective = make_ue_obj(x, y.value[:], rn)
+    problem.constraints[1] = make_eq_constratints(rn, od, ue_d, x)
+    solve!(problem, solver)
+
+    err = 10
+    counter = 0    
+    while (counter < max_iters) || (err > tolerance)
+        
+        old_x = x.value[:]
+        old_y = y.value[:]
+        
+        problem.objective = make_ue_obj(x, y.value[:], rn)
+        problem.constraints[1] = make_eq_constratints(rn, od, ue_d, x)
+        solve!(problem, solver)
+        problem.objective = make_so_obj(y, x.value[:], rn)
+        problem.constraints[1] = make_eq_constratints(rn, od, so_d, y)
+        solve!(problem, solver)
+
+        err = maximum([norm(x.value - old_x), norm(y.value - old_y)])
+        counter += 1
+    end
+    x.value[:], y.value[:], counter, err
+end
+
+
+function alt_mixed_ta_solve(rn, od, d::Float64, γ::Float64; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=100, warmstart_flag=true)
+    ue_d = (1.0 - γ)*d
+    so_d = γ*d             
+    alt_mixed_ta_solve(rn, od, Float64[ue_d, so_d], solver=solver, tolerance=tolerance, max_iters=max_iters, warmstart_flag=warmstart_flag)
+end
+
+
+function alt_mixed_ta_solve(rn, od, d::Float64, γ_range::Array{Float64,1}; solver=SCSSolver(verbose=false), tolerance=1e-6, max_iters=100, warmstart_flag=true)
+    m = num_edges(rn.g)
+    a = rn.a
+    b = rn.b
+    n_γ = length(γ_range)
+
+    sol_sel = zeros(Float64, m, n_γ)
+    sol_alt = zeros(Float64, m, n_γ)
+    its = zeros(Int, n_γ) #Iterations between so and ue flows
+    last_change = zeros(Float64, n_γ) #Change in magnitude of sol vector in last iter
+
+    for (i,γ) in enumerate(γ_range)
+        sol_sel[:,i], sol_alt[:,i], its[i], last_change[i] =
+        alt_mixed_ta_solve(rn, od, d, γ, solver=solver, tolerance=tolerance, max_iters=max_iters, warmstart_flag=warmstart_flag)
+    end
+    sol_sel, sol_alt, its, last_change
 end
