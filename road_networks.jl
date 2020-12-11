@@ -140,7 +140,6 @@ function od_matrix_from_pair_non_sparse(g, od_pair)
     full(OD)
 end
 
-
 """
     node_positions(rn::RoadNetwork)
     
@@ -149,4 +148,37 @@ Returns the geometric positions of the nodes in rn.
 """
 function node_positions(rn::RoadNetwork)
     node_positions(rn.g)
+end
+
+"""
+Saves graph to tabular files with endings .graph and .pos
+These files contain the edge structure and node coordinates respectively.
+
+the periodic flag can be set to true to keep track of image edges (that cross
+the boundaries) for plotting. Maybe as a separate file (.eimg)? NOT IMPLEMENTED
+YET. 
+"""
+function save_graph_dlm(rn, g_name, peridoic=false)
+            
+    m = num_edges(rn.g)
+    n = num_nodes(rn.g)
+    
+    sources = zeros(Int, m)
+    targets = zeros(Int, m)
+    crosses_boundary = zeros(Int, m) #in case of periodic bc's
+
+    for (j, e) in enumerate(rn.g.edges)
+        s = e.source
+        t = e.target
+        sources[j] = s.index
+        targets[j] = t.index
+        
+        crosses_boundary[j] = a[j] < norm(s.pos - t.pos) ? 1 : 0
+    end
+    graph_block = Any[sources targets rn.a rn.b crosses_boundary]
+
+    pos_block = hcat(node_positions(rn)...)
+    
+    writedlm(g_name*".graph", graph_block)
+    writedlm(g_name*".pos", pos_block)
 end
